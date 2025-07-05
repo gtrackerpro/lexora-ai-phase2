@@ -98,7 +98,7 @@ const CreateTopic: React.FC = () => {
       const response = await topicsAPI.create({
         title: data.title,
         description: data.description,
-        tags: data.tags,
+        tags: tags,
         difficulty: data.difficulty,
         weeks: parseInt(data.weeks),
         goals: data.goals,
@@ -106,7 +106,12 @@ const CreateTopic: React.FC = () => {
 
       if (response.success) {
         toast.success('Learning path created successfully with AI content!');
-        navigate('/dashboard');
+        // Navigate to the created learning path
+        if (response.learningPath) {
+          navigate(`/learning/${response.learningPath._id}`);
+        } else {
+          navigate('/dashboard');
+        }
       }
     } catch (error: any) {
       console.error('Topic creation error:', error);

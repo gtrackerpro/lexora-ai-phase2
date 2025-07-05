@@ -14,6 +14,7 @@ interface TopicCardProps {
   thumbnail?: string;
   onContinue: () => void;
   index?: number;
+  topic?: any;
 }
 
 const TopicCard: React.FC<TopicCardProps> = ({
@@ -28,6 +29,7 @@ const TopicCard: React.FC<TopicCardProps> = ({
   thumbnail,
   onContinue,
   index = 0,
+  topic,
 }) => {
   const difficultyColors = {
     Beginner: 'from-success-500 to-success-600',
@@ -160,7 +162,14 @@ const TopicCard: React.FC<TopicCardProps> = ({
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
-            onClick={onContinue}
+            onClick={() => {
+              if (topic?._id) {
+                // Navigate to learning path instead of generic continue
+                window.location.href = `/learning/${topic._id}`;
+              } else {
+                onContinue();
+              }
+            }}
             className="w-full btn-primary py-3 mt-6 group/btn relative overflow-hidden"
           >
             <div className="absolute inset-0 bg-gradient-to-r from-primary-400 to-accent-400 opacity-0 group-hover/btn:opacity-100 transition-opacity duration-300"></div>

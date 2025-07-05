@@ -14,6 +14,10 @@ import './config/passport'; // Initialize passport configuration
 import authRoutes from './routes/auth';
 import topicRoutes from './routes/topics';
 import learningPathRoutes from './routes/learningPaths';
+import lessonRoutes from './routes/lessons';
+import videoRoutes from './routes/videos';
+import progressRoutes from './routes/progress';
+import assetRoutes from './routes/assets';
 
 // Connect to database
 connectDB();
@@ -45,6 +49,10 @@ app.use('/api/auth', authRoutes);
 app.use('/api/users', authRoutes); // For /api/users/me routes
 app.use('/api/topics', topicRoutes);
 app.use('/api/learning-paths', learningPathRoutes);
+app.use('/api/lessons', lessonRoutes);
+app.use('/api/videos', videoRoutes);
+app.use('/api/progress', progressRoutes);
+app.use('/api/assets', assetRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

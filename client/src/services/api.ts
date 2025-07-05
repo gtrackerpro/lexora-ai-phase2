@@ -142,3 +142,157 @@ export const learningPathsAPI = {
 };
 
 export default api;
+
+// Lessons API
+export const lessonsAPI = {
+  create: async (lessonData: {
+    learningPathId: string;
+    title: string;
+    week: number;
+    day: number;
+    objectives: string[];
+  }): Promise<{ success: boolean; lesson: any }> => {
+    const response = await api.post('/lessons', lessonData);
+    return response.data;
+  },
+
+  getByPath: async (pathId: string): Promise<{ success: boolean; lessons: any[]; count: number }> => {
+    const response = await api.get(`/lessons/path/${pathId}`);
+    return response.data;
+  },
+
+  getById: async (id: string): Promise<{ success: boolean; lesson: any; video?: any }> => {
+    const response = await api.get(`/lessons/${id}`);
+    return response.data;
+  },
+
+  generateVideo: async (lessonId: string, data: {
+    avatarId: string;
+    voiceId: string;
+  }): Promise<{ success: boolean; video: any }> => {
+    const response = await api.post(`/lessons/${lessonId}/generate-video`, data);
+    return response.data;
+  },
+
+  update: async (id: string, lessonData: {
+    title?: string;
+    content?: string;
+    script?: string;
+    objectives?: string[];
+  }): Promise<{ success: boolean; lesson: any }> => {
+    const response = await api.put(`/lessons/${id}`, lessonData);
+    return response.data;
+  },
+
+  delete: async (id: string): Promise<{ success: boolean; message: string }> => {
+    const response = await api.delete(`/lessons/${id}`);
+    return response.data;
+  },
+};
+
+// Videos API
+export const videosAPI = {
+  getByLesson: async (lessonId: string): Promise<{ success: boolean; videos: any[]; count: number }> => {
+    const response = await api.get(`/videos/lesson/${lessonId}`);
+    return response.data;
+  },
+
+  getById: async (id: string): Promise<{ success: boolean; video: any }> => {
+    const response = await api.get(`/videos/${id}`);
+    return response.data;
+  },
+
+  updateStatus: async (id: string, data: {
+    status: string;
+    videoUrl?: string;
+    durationSec?: number;
+  }): Promise<{ success: boolean; video: any }> => {
+    const response = await api.put(`/videos/${id}/status`, data);
+    return response.data;
+  },
+
+  delete: async (id: string): Promise<{ success: boolean; message: string }> => {
+    const response = await api.delete(`/videos/${id}`);
+    return response.data;
+  },
+};
+
+// Progress API
+export const progressAPI = {
+  updateProgress: async (progressData: {
+    lessonId: string;
+    learningPathId: string;
+    topicId: string;
+    videoId?: string;
+    watchedPercentage: number;
+    completed: boolean;
+    notes?: string[];
+  }): Promise<{ success: boolean; progress: any }> => {
+    const response = await api.post('/progress', progressData);
+    return response.data;
+  },
+
+  getUserProgress: async (filters?: {
+    topicId?: string;
+    learningPathId?: string;
+  }): Promise<{ success: boolean; progress: any[]; stats: any; count: number }> => {
+    const params = new URLSearchParams();
+    if (filters?.topicId) params.append('topicId', filters.topicId);
+    if (filters?.learningPathId) params.append('learningPathId', filters.learningPathId);
+    
+    const response = await api.get(`/progress/user?${params.toString()}`);
+    return response.data;
+  },
+
+  getLessonProgress: async (lessonId: string): Promise<{ success: boolean; progress: any }> => {
+    const response = await api.get(`/progress/lesson/${lessonId}`);
+    return response.data;
+  },
+
+  addNote: async (progressId: string, note: string): Promise<{ success: boolean; progress: any }> => {
+    const response = await api.post(`/progress/${progressId}/notes`, { note });
+    return response.data;
+  },
+
+  getAnalytics: async (): Promise<{ success: boolean; analytics: any }> => {
+    const response = await api.get('/progress/analytics');
+    return response.data;
+  },
+};
+
+// Assets API
+export const assetsAPI = {
+  upload: async (file: File, type: string): Promise<{ success: boolean; asset: any }> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('type', type);
+    
+    const response = await api.post('/assets/upload', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
+  },
+
+  getAll: async (type?: string): Promise<{ success: boolean; assets: any[]; count: number }> => {
+    const params = type ? `?type=${type}` : '';
+    const response = await api.get(`/assets${params}`);
+    return response.data;
+  },
+
+  getById: async (id: string): Promise<{ success: boolean; asset: any }> => {
+    const response = await api.get(`/assets/${id}`);
+    return response.data;
+  },
+
+  delete: async (id: string): Promise<{ success: boolean; message: string }> => {
+    const response = await api.delete(`/assets/${id}`);
+    return response.data;
+  },
+
+  updateUsage: async (id: string, usedIn: string[]): Promise<{ success: boolean; asset: any }> => {
+    const response = await api.put(`/assets/${id}/usage`, { usedIn });
+    return response.data;
+  },
+};

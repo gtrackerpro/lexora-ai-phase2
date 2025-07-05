@@ -7,6 +7,8 @@ import RegisterForm from './components/Auth/RegisterForm';
 import AuthCallback from './pages/AuthCallback';
 import Dashboard from './pages/Dashboard';
 import CreateTopic from './pages/CreateTopic';
+import LearningPath from './pages/LearningPath';
+import LessonViewer from './pages/LessonViewer';
 
 function App() {
   return (
@@ -30,6 +32,22 @@ function App() {
               element={
                 <ProtectedRoute>
                   <CreateTopic />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/learning/:id"
+              element={
+                <ProtectedRoute>
+                  <LearningPath />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/lessons/:id"
+              element={
+                <ProtectedRoute>
+                  <LessonViewer />
                 </ProtectedRoute>
               }
             />
