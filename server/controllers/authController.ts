@@ -17,8 +17,8 @@ if (!JWT_EXPIRE) {
 
 // Generate JWT Token
 const generateToken = (id: string): string => {
-  return jwt.sign({ id }, JWT_SECRET, {
-    expiresIn: JWT_EXPIRE
+  return jwt.sign({ id }, JWT_SECRET!, {
+    expiresIn: JWT_EXPIRE!
   });
 };
 
