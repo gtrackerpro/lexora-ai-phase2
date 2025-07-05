@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Eye, EyeOff, Mail, Lock, User, UserPlus } from 'lucide-react';
+import { BookOpen, Eye, EyeOff, Loader2, ArrowRight, Sparkles, UserPlus } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
-
 import GoogleSignInButton from './GoogleSignInButton';
+import toast from 'react-hot-toast';
+
 const registerSchema = z.object({
   displayName: z.string().min(2, 'Name must be at least 2 characters'),
   email: z.string().email('Please enter a valid email address'),
@@ -22,196 +24,266 @@ type RegisterFormData = z.infer<typeof registerSchema>;
 const RegisterForm: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
-  
   const { register: registerUser } = useAuth();
   const navigate = useNavigate();
 
   const {
     register,
     handleSubmit,
-    formState: { errors },
+    formState: { errors, isSubmitting },
   } = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
   });
 
   const onSubmit = async (data: RegisterFormData) => {
-    setIsLoading(true);
-    setError('');
-
     try {
       await registerUser(data.email, data.password, data.displayName);
+      toast.success('Welcome to Lexora! Your account has been created.');
       navigate('/dashboard');
-    } catch (err: any) {
-      setError(err.message || 'Registration failed');
-    } finally {
-      setIsLoading(false);
+    } catch (error) {
+      toast.error('Failed to create account. Please try again.');
     }
   };
 
   return (
-    <div className="min-h-screen bg-dark-950 flex items-center justify-center px-4">
-      <div className="max-w-md w-full space-y-8">
-        {/* Logo */}
-        <div className="text-center">
-          <div className="flex items-center justify-center space-x-3 mb-6">
-            <img 
-              src="/lexora-logo.png" 
-              alt="Lexora Logo" 
-              className="h-12 w-12"
-            />
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-primary-400 to-primary-600 bg-clip-text text-transparent">
-              Lexora
-            </h1>
-          </div>
-          <p className="text-dark-400">Guided by AI. Powered by You.</p>
-        </div>
+    <div className="min-h-screen bg-gradient-to-br from-black-950 via-dark-950 to-black-950 flex items-center justify-center px-4 relative overflow-hidden">
+      {/* Background Effects */}
+      <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-accent-500/10 rounded-full blur-3xl animate-float"></div>
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-primary-500/10 rounded-full blur-3xl animate-float" style={{ animationDelay: '2s' }}></div>
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-gradient-to-r from-accent-500/5 to-primary-500/5 rounded-full blur-3xl"></div>
+      </div>
 
-        <div className="bg-dark-900 rounded-xl p-8 border border-dark-700">
-          <div className="text-center mb-8">
-            <h2 className="text-2xl font-bold text-white">Create Account</h2>
-            <p className="text-dark-400 mt-2">Start your personalized learning journey</p>
-          </div>
-
-          {error && (
-            <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-4 mb-6">
-              <p className="text-red-400 text-sm">{error}</p>
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="max-w-md w-full relative z-10"
+      >
+        {/* Logo Section */}
+        <motion.div
+          initial={{ scale: 0.8, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ delay: 0.1 }}
+          className="text-center mb-8"
+        >
+          <div className="inline-flex items-center space-x-3 mb-6">
+            <motion.div
+              whileHover={{ scale: 1.1, rotate: 10 }}
+              className="relative"
+            >
+              <div className="absolute inset-0 bg-gradient-to-r from-accent-500 to-primary-500 rounded-2xl blur opacity-75"></div>
+              <div className="relative bg-gradient-to-r from-accent-600 to-primary-600 p-4 rounded-2xl">
+                <BookOpen className="h-8 w-8 text-white" />
+              </div>
+            </motion.div>
+            <div>
+              <h1 className="text-4xl font-bold text-gradient">Lexora</h1>
+              <p className="text-sm text-dark-400 mt-1">AI-Powered Learning</p>
             </div>
-          )}
+          </div>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.3 }}
+          >
+            <h2 className="text-2xl font-bold text-white mb-2">Create Account</h2>
+            <p className="text-dark-400">Start your personalized learning journey</p>
+          </motion.div>
+        </motion.div>
 
+        {/* Register Form */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="glass-card backdrop-blur-xl"
+        >
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             <div>
-              <label htmlFor="displayName" className="block text-sm font-medium text-dark-300 mb-2">
+              <label htmlFor="displayName" className="block text-sm font-medium text-white mb-2">
                 Full Name
               </label>
-              <div className="relative">
-                <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-dark-400 w-5 h-5" />
+              <div className="relative group">
                 <input
                   {...register('displayName')}
                   type="text"
                   id="displayName"
-                  className="w-full bg-dark-800 border border-dark-600 rounded-lg pl-10 pr-4 py-3 text-white placeholder-dark-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  className="input-field w-full"
                   placeholder="Enter your full name"
                 />
+                <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-accent-500/10 to-primary-500/10 opacity-0 group-focus-within:opacity-100 transition-opacity pointer-events-none"></div>
               </div>
               {errors.displayName && (
-                <p className="mt-1 text-sm text-red-400">{errors.displayName.message}</p>
+                <motion.p
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="mt-2 text-sm text-error-400"
+                >
+                  {errors.displayName.message}
+                </motion.p>
               )}
             </div>
 
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-dark-300 mb-2">
+              <label htmlFor="email" className="block text-sm font-medium text-white mb-2">
                 Email Address
               </label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-dark-400 w-5 h-5" />
+              <div className="relative group">
                 <input
                   {...register('email')}
                   type="email"
                   id="email"
-                  className="w-full bg-dark-800 border border-dark-600 rounded-lg pl-10 pr-4 py-3 text-white placeholder-dark-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  className="input-field w-full"
                   placeholder="Enter your email"
                 />
+                <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-accent-500/10 to-primary-500/10 opacity-0 group-focus-within:opacity-100 transition-opacity pointer-events-none"></div>
               </div>
               {errors.email && (
-                <p className="mt-1 text-sm text-red-400">{errors.email.message}</p>
+                <motion.p
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="mt-2 text-sm text-error-400"
+                >
+                  {errors.email.message}
+                </motion.p>
               )}
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-dark-300 mb-2">
+              <label htmlFor="password" className="block text-sm font-medium text-white mb-2">
                 Password
               </label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-dark-400 w-5 h-5" />
+              <div className="relative group">
                 <input
                   {...register('password')}
                   type={showPassword ? 'text' : 'password'}
                   id="password"
-                  className="w-full bg-dark-800 border border-dark-600 rounded-lg pl-10 pr-12 py-3 text-white placeholder-dark-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  className="input-field w-full pr-12"
                   placeholder="Create a password"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-dark-400 hover:text-white"
+                  className="absolute inset-y-0 right-0 pr-4 flex items-center text-dark-400 hover:text-white transition-colors"
                 >
-                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                 </button>
+                <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-accent-500/10 to-primary-500/10 opacity-0 group-focus-within:opacity-100 transition-opacity pointer-events-none"></div>
               </div>
               {errors.password && (
-                <p className="mt-1 text-sm text-red-400">{errors.password.message}</p>
+                <motion.p
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="mt-2 text-sm text-error-400"
+                >
+                  {errors.password.message}
+                </motion.p>
               )}
             </div>
 
             <div>
-              <label htmlFor="confirmPassword" className="block text-sm font-medium text-dark-300 mb-2">
+              <label htmlFor="confirmPassword" className="block text-sm font-medium text-white mb-2">
                 Confirm Password
               </label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-dark-400 w-5 h-5" />
+              <div className="relative group">
                 <input
                   {...register('confirmPassword')}
                   type={showConfirmPassword ? 'text' : 'password'}
                   id="confirmPassword"
-                  className="w-full bg-dark-800 border border-dark-600 rounded-lg pl-10 pr-12 py-3 text-white placeholder-dark-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  className="input-field w-full pr-12"
                   placeholder="Confirm your password"
                 />
                 <button
                   type="button"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-dark-400 hover:text-white"
+                  className="absolute inset-y-0 right-0 pr-4 flex items-center text-dark-400 hover:text-white transition-colors"
                 >
-                  {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                 </button>
+                <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-accent-500/10 to-primary-500/10 opacity-0 group-focus-within:opacity-100 transition-opacity pointer-events-none"></div>
               </div>
               {errors.confirmPassword && (
-                <p className="mt-1 text-sm text-red-400">{errors.confirmPassword.message}</p>
+                <motion.p
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="mt-2 text-sm text-error-400"
+                >
+                  {errors.confirmPassword.message}
+                </motion.p>
               )}
             </div>
 
-            <button
+            <div className="flex items-start space-x-3">
+              <input
+                type="checkbox"
+                id="terms"
+                className="mt-1 rounded border-dark-600 text-primary-600 focus:ring-primary-500 focus:ring-offset-black-950 bg-dark-800 transition-all duration-200"
+                required
+              />
+              <label htmlFor="terms" className="text-sm text-dark-300 leading-relaxed">
+                I agree to the{' '}
+                <Link to="/terms" className="text-primary-400 hover:text-primary-300 transition-colors">
+                  Terms of Service
+                </Link>{' '}
+                and{' '}
+                <Link to="/privacy" className="text-primary-400 hover:text-primary-300 transition-colors">
+                  Privacy Policy
+                </Link>
+              </label>
+            </div>
+
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
               type="submit"
-              disabled={isLoading}
-              className="w-full bg-primary-600 hover:bg-primary-700 disabled:bg-primary-800 text-white font-medium py-3 px-4 rounded-lg flex items-center justify-center space-x-2 transition-colors"
+              disabled={isSubmitting}
+              className="w-full btn-primary py-4 text-base font-semibold group relative overflow-hidden"
             >
-              {isLoading ? (
-                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-              ) : (
-                <>
-                  <UserPlus className="w-5 h-5" />
-                  <span>Create Account</span>
-                </>
-              )}
-            </button>
+              <div className="absolute inset-0 bg-gradient-to-r from-accent-400 to-primary-400 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+              <div className="relative flex items-center justify-center space-x-2">
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="animate-spin h-5 w-5" />
+                    <span>Creating account...</span>
+                  </>
+                ) : (
+                  <>
+                    <UserPlus className="h-5 w-5" />
+                    <span>Create Account</span>
+                    <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
+                  </>
+                )}
+              </div>
+            </motion.button>
           </form>
 
           {/* Divider */}
-          <div className="my-6">
+          <div className="my-8">
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-dark-600" />
+                <div className="w-full border-t border-dark-700"></div>
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-dark-800 text-dark-400">Or continue with</span>
+                <span className="px-4 bg-dark-900/80 text-dark-400">Or continue with</span>
               </div>
             </div>
           </div>
+
+          {/* Google Sign In */}
+          <GoogleSignInButton text="Sign up with Google" />
+
           <div className="mt-8 text-center">
             <p className="text-dark-400">
               Already have an account?{' '}
-              <Link to="/login" className="text-primary-400 hover:text-primary-300 font-medium">
+              <Link to="/login" className="text-primary-400 hover:text-primary-300 font-medium transition-colors">
                 Sign in
               </Link>
             </p>
           </div>
-        </div>
-      </div>
+        </motion.div>
+      </motion.div>
     </div>
   );
 };
 
-          {/* Google Sign In */}
-          <GoogleSignInButton text="Sign up with Google" />
 export default RegisterForm;
