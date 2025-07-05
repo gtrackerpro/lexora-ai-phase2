@@ -10,6 +10,7 @@ export default {
       colors: {
         // Ultra dark theme inspired by TikTok/Twitter
         black: {
+          DEFAULT: '#0a0a0a',
           50: '#f6f6f6',
           100: '#e7e7e7',
           200: '#d1d1d1',
