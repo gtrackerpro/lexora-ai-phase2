@@ -15,43 +15,10 @@ Convert to audio using gTTS
 
 Sync audio with user-uploaded avatar using Wav2Lip
 
-Asset Storage – Avatars, audio, and videos are uploaded to S3 or Cloudflare R2
+Asset Storage – Avatars, audio, and videos are uploaded to S3
 
 Lesson Playback & Progress Tracking – Clean viewer interface with transcript, video, and user notes
 
-🧱 Backend Database (MongoDB Atlas)
-Define these collections with Mongoose-style schemas:
-
-users: email, avatar_id, voice_id, preferences
-
-topics: title, tags, created_by
-
-learning_paths: topic_id, user_id, title, weeks, goal
-
-lessons: learning_path_id, title, script, week, day
-
-videos: lesson_id, avatar_id, voice_id, video_url
-
-progress: user_id, lesson_id, watched_percentage, revisits
-
-assets: file_url, file_name, type (avatar, voice, audio, video)
-
-🌐 REST API Endpoints
-Build a modular backend with endpoints like:
-
-POST /api/auth/register – register user
-
-POST /api/topics – create a new topic
-
-POST /api/learning-paths – generate paths from topic
-
-POST /api/lessons – create lessons in a path
-
-POST /api/videos – generate video from script/audio/avatar
-
-GET /api/users/me/progress – track lesson progress
-
-POST /api/assets/upload – upload avatar, audio, video to storage
 
 🎨 UI/UX Requirements
 Use Tailwind CSS with full dark theme styling
@@ -77,7 +44,7 @@ Narration: gTTS (Google Text-to-Speech)
 
 Video Generation: Wav2Lip (open-source avatar syncing)
 
-Storage: AWS S3 or Cloudflare R2
+Storage: AWS S3 
 
 ✅ MVP Goals
 Full user auth with avatar & voice selection
@@ -95,37 +62,21 @@ Database Schema, Application Flow & API Design
 
 📦 Collections Overview
 
-Collection
+Collection : Purpose
 
-Purpose
+users : User authentication, preferences, avatar info
 
-users
+topics : High-level subject or domain
 
-User authentication, preferences, avatar info
+learning_paths : Structured plan under each topic
 
-topics
+lessons : Daily/weekly learning content
 
-High-level subject or domain
+videos : AI-generated avatar-narrated videos
 
-learning_paths
+progress : User progress tracking
 
-Structured plan under each topic
-
-lessons
-
-Daily/weekly learning content
-
-videos
-
-AI-generated avatar-narrated videos
-
-progress
-
-User progress tracking
-
-assets
-
-Avatar, audio, video, script files
+assets : Avatar, audio, video, script files
 
 🧑‍💻 USERS
 
