@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import jwt from 'jsonwebtoken';
+import jwt, { Secret } from 'jsonwebtoken';
 import User from '../models/User';
 import { AuthRequest } from '../middleware/auth';
 
@@ -17,7 +17,7 @@ if (!JWT_EXPIRE) {
 
 // Generate JWT Token
 const generateToken = (id: string): string => {
-  return jwt.sign({ id }, JWT_SECRET!, {
+  return jwt.sign({ id }, JWT_SECRET! as Secret, {
     expiresIn: JWT_EXPIRE!
   });
 };
