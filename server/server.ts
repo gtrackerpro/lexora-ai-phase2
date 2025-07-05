@@ -1,6 +1,6 @@
 import dotenv from 'dotenv';
 
-// Load environment variables from .env file
+// Load environment variables from .env file FIRST
 dotenv.config();
 
 import express from 'express';
@@ -9,7 +9,7 @@ import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import connectDB from './config/database';
 import errorHandler from './middleware/errorHandler';
-import './config/passport'; // Initialize passport configuration
+import './config/passport'; // Initialize passport configuration AFTER env vars are loaded
 
 // Route imports
 import authRoutes from './routes/auth';
