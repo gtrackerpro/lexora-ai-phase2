@@ -46,7 +46,7 @@ passport.use(
         return done(null, newUser);
       } catch (error) {
         console.error('Google OAuth Error:', error);
-        return done(error, null);
+        return done(error as Error, undefined);
       }
     }
   )
@@ -63,7 +63,7 @@ passport.deserializeUser(async (id: string, done) => {
     const user = await User.findById(id);
     done(null, user || false);
   } catch (error) {
-    done(error, false);
+    done(error as Error, false);
   }
 });
 
