@@ -43,7 +43,7 @@ const RegisterForm: React.FC = () => {
       await registerUser(data.email, data.password, data.displayName);
       navigate('/dashboard');
     } catch (err: any) {
-      setError(err.message);
+      setError(err.message || 'Registration failed');
     } finally {
       setIsLoading(false);
     }
@@ -52,8 +52,18 @@ const RegisterForm: React.FC = () => {
   return (
     <div className="min-h-screen bg-dark-950 flex items-center justify-center px-4">
       <div className="max-w-md w-full space-y-8">
+        {/* Logo */}
         <div className="text-center">
-          <h1 className="text-4xl font-bold text-white mb-2">Lexora</h1>
+          <div className="flex items-center justify-center space-x-3 mb-6">
+            <img 
+              src="/lexora-logo.png" 
+              alt="Lexora Logo" 
+              className="h-12 w-12"
+            />
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-primary-400 to-primary-600 bg-clip-text text-transparent">
+              Lexora
+            </h1>
+          </div>
           <p className="text-dark-400">Guided by AI. Powered by You.</p>
         </div>
 
