@@ -39,7 +39,7 @@ Lexora is a full-stack AI education platform that generates structured lessons f
 - **bcryptjs** for password hashing
 
 ### AI & Media Processing
-- **LLaMA 3** via Groq/OpenRouter for content generation
+- **LLaMA 3** via Groq for content generation
 - **gTTS** (Google Text-to-Speech) for narration
 - **Wav2Lip** for avatar video syncing
 - **AWS S3** for asset storage
@@ -107,9 +107,8 @@ AWS_SECRET_ACCESS_KEY=your-aws-secret-key
 AWS_BUCKET_NAME=lexora-assets
 AWS_REGION=us-east-1
 
-# AI Services (Optional for AI features)
+# AI Service (Optional for AI features)
 GROQ_API_KEY=your-groq-api-key
-OPENROUTER_API_KEY=your-openrouter-api-key
 
 # Frontend URL
 CLIENT_URL=http://localhost:5173
