@@ -7,7 +7,6 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
-import dotenv from 'dotenv';
 import connectDB from './config/database';
 import errorHandler from './middleware/errorHandler';
 
@@ -15,9 +14,6 @@ import errorHandler from './middleware/errorHandler';
 import authRoutes from './routes/auth';
 import topicRoutes from './routes/topics';
 import learningPathRoutes from './routes/learningPaths';
-
-// Load env vars
-dotenv.config();
 
 // Connect to database
 connectDB();
