@@ -6,9 +6,9 @@ dotenv.config();
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
-import rateLimit from 'express-rate-limit';
 import connectDB from './config/database';
 import errorHandler from './middleware/errorHandler';
+import './config/passport'; // Initialize passport configuration
 
 // Route imports
 import authRoutes from './routes/auth';

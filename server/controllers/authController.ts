@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import jwt, { Secret } from 'jsonwebtoken';
 import User, { IUser } from '../models/User';
 import { AuthRequest } from '../middleware/auth';
+import passport from '../config/passport';
 
 // Validate and declare JWT constants
 const JWT_SECRET = process.env.JWT_SECRET;
@@ -45,7 +46,8 @@ export const register = async (req: Request, res: Response) => {
     const user = await User.create({
       email,
       password,
-      displayName
+      displayName,
+      authProvider: 'local'
     }) as IUser;
 
     // Generate token
@@ -125,6 +127,41 @@ export const login = async (req: Request, res: Response) => {
       message: 'Server error'
     });
   }
+};
+
+// @desc    Google OAuth login
+// @route   GET /api/auth/google
+// @access  Public
+export const googleAuth = passport.authenticate('google', {
+  scope: ['profile', 'email']
+});
+
+// @desc    Google OAuth callback
+// @route   GET /api/auth/google/callback
+// @access  Public
+export const googleCallback = (req: Request, res: Response) => {
+  passport.authenticate('google', { session: false }, (err: any, user: IUser) => {
+    if (err) {
+      console.error('Google OAuth callback error:', err);
+      return res.redirect(`${process.env.CLIENT_URL}/login?error=oauth_error`);
+    }
+
+    if (!user) {
+      return res.redirect(`${process.env.CLIENT_URL}/login?error=oauth_failed`);
+    }
+
+    // Generate JWT token
+    const token = generateToken(user._id.toString());
+
+    // Redirect to frontend with token
+    res.redirect(`${process.env.CLIENT_URL}/auth/callback?token=${token}&user=${encodeURIComponent(JSON.stringify({
+      id: user._id,
+      email: user.email,
+      displayName: user.displayName,
+      avatar: user.avatar,
+      preferences: user.preferences
+    }))}`);
+  })(req, res);
 };
 
 // @desc    Get current logged in user

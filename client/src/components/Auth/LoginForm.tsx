@@ -5,6 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Eye, EyeOff, Mail, Lock, LogIn } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
+import GoogleSignInButton from './GoogleSignInButton';
 
 const loginSchema = z.object({
   email: z.string().email('Please enter a valid email address'),
@@ -137,6 +138,21 @@ const LoginForm: React.FC = () => {
               )}
             </button>
           </form>
+
+          {/* Divider */}
+          <div className="my-6">
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-dark-600" />
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-2 bg-dark-800 text-dark-400">Or continue with</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Google Sign In */}
+          <GoogleSignInButton />
 
           <div className="mt-8 text-center">
             <p className="text-dark-400">

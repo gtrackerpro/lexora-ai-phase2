@@ -4,8 +4,11 @@ import bcrypt from 'bcryptjs';
 export interface IUser extends Document {
   _id: mongoose.Types.ObjectId;
   email: string;
-  password: string;
+  password?: string;
   displayName: string;
+  googleId?: string;
+  avatar?: string;
+  authProvider?: 'local' | 'google';
   avatarId?: mongoose.Types.ObjectId;
   voiceId?: mongoose.Types.ObjectId;
   preferences: {
@@ -27,13 +30,27 @@ const userSchema = new Schema<IUser>({
   },
   password: {
     type: String,
-    required: true,
+    required: function(this: IUser) {
+      return this.authProvider === 'local';
+    },
     minlength: 6
   },
   displayName: {
     type: String,
     required: true,
     trim: true
+  },
+  googleId: {
+    type: String,
+    sparse: true
+  },
+  avatar: {
+    type: String
+  },
+  authProvider: {
+    type: String,
+    enum: ['local', 'google'],
+    default: 'local'
   },
   avatarId: {
     type: Schema.Types.ObjectId,
@@ -66,7 +83,7 @@ const userSchema = new Schema<IUser>({
 
 // Hash password before saving
 userSchema.pre('save', async function(next) {
-  if (!this.isModified('password')) return next();
+  if (!this.isModified('password') || !this.password) return next();
   
   const salt = await bcrypt.genSalt(12);
   this.password = await bcrypt.hash(this.password, salt);
@@ -75,6 +92,7 @@ userSchema.pre('save', async function(next) {
 
 // Compare password method
 userSchema.methods.comparePassword = async function(candidatePassword: string): Promise<boolean> {
+  if (!this.password) return false;
   return bcrypt.compare(candidatePassword, this.password);
 };
 
