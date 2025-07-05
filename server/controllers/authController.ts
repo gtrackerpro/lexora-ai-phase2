@@ -1,7 +1,6 @@
 import { Request, Response } from 'express';
 import jwt, { Secret } from 'jsonwebtoken';
 import User, { IUser } from '../models/User';
-import { AuthRequest } from '../middleware/auth';
 import passport from '../config/passport';
 
 // Validate and declare JWT constants
@@ -167,7 +166,7 @@ export const googleCallback = (req: Request, res: Response) => {
 // @desc    Get current logged in user
 // @route   GET /api/users/me
 // @access  Private
-export const getMe = async (req: AuthRequest, res: Response) => {
+export const getMe = async (req: Request, res: Response) => {
   try {
     const user = await User.findById(req.user?._id).populate('avatarId voiceId');
     
@@ -186,7 +185,7 @@ export const getMe = async (req: AuthRequest, res: Response) => {
 // @desc    Update user preferences
 // @route   PUT /api/users/me/preferences
 // @access  Private
-export const updatePreferences = async (req: AuthRequest, res: Response) => {
+export const updatePreferences = async (req: Request, res: Response) => {
   try {
     const { preferences } = req.body;
 

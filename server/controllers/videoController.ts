@@ -1,12 +1,11 @@
 import { Response } from 'express';
 import Video from '../models/Video';
 import Lesson from '../models/Lesson';
-import { AuthRequest } from '../middleware/auth';
 
 // @desc    Get videos for a lesson
 // @route   GET /api/lessons/:lessonId/videos
 // @access  Private
-export const getVideosByLesson = async (req: AuthRequest, res: Response) => {
+export const getVideosByLesson = async (req: Request, res: Response) => {
   try {
     const { lessonId } = req.params;
 
@@ -41,7 +40,7 @@ export const getVideosByLesson = async (req: AuthRequest, res: Response) => {
 // @desc    Get single video
 // @route   GET /api/videos/:id
 // @access  Private
-export const getVideo = async (req: AuthRequest, res: Response) => {
+export const getVideo = async (req: Request, res: Response) => {
   try {
     const video = await Video.findById(req.params.id)
       .populate('lessonId', 'title content')
@@ -78,7 +77,7 @@ export const getVideo = async (req: AuthRequest, res: Response) => {
 // @desc    Update video status
 // @route   PUT /api/videos/:id/status
 // @access  Private
-export const updateVideoStatus = async (req: AuthRequest, res: Response) => {
+export const updateVideoStatus = async (req: Request, res: Response) => {
   try {
     const { status, videoUrl, durationSec } = req.body;
 
@@ -124,7 +123,7 @@ export const updateVideoStatus = async (req: AuthRequest, res: Response) => {
 // @desc    Delete video
 // @route   DELETE /api/videos/:id
 // @access  Private
-export const deleteVideo = async (req: AuthRequest, res: Response) => {
+export const deleteVideo = async (req: Request, res: Response) => {
   try {
     const video = await Video.findById(req.params.id);
     if (!video) {

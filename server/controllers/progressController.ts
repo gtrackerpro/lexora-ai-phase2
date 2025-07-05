@@ -2,12 +2,11 @@ import { Response } from 'express';
 import Progress from '../models/Progress';
 import Lesson from '../models/Lesson';
 import Video from '../models/Video';
-import { AuthRequest } from '../middleware/auth';
 
 // @desc    Create or update progress
 // @route   POST /api/progress
 // @access  Private
-export const updateProgress = async (req: AuthRequest, res: Response) => {
+export const updateProgress = async (req: Request, res: Response) => {
   try {
     const { 
       lessonId, 
@@ -85,7 +84,7 @@ export const updateProgress = async (req: AuthRequest, res: Response) => {
 // @desc    Get user's progress
 // @route   GET /api/users/me/progress
 // @access  Private
-export const getUserProgress = async (req: AuthRequest, res: Response) => {
+export const getUserProgress = async (req: Request, res: Response) => {
   try {
     const { topicId, learningPathId } = req.query;
 
@@ -129,7 +128,7 @@ export const getUserProgress = async (req: AuthRequest, res: Response) => {
 // @desc    Get progress for specific lesson
 // @route   GET /api/lessons/:lessonId/progress
 // @access  Private
-export const getLessonProgress = async (req: AuthRequest, res: Response) => {
+export const getLessonProgress = async (req: Request, res: Response) => {
   try {
     const { lessonId } = req.params;
 
@@ -163,7 +162,7 @@ export const getLessonProgress = async (req: AuthRequest, res: Response) => {
 // @desc    Add note to progress
 // @route   POST /api/progress/:id/notes
 // @access  Private
-export const addProgressNote = async (req: AuthRequest, res: Response) => {
+export const addProgressNote = async (req: Request, res: Response) => {
   try {
     const { note } = req.body;
     const progressId = req.params.id;
@@ -195,7 +194,7 @@ export const addProgressNote = async (req: AuthRequest, res: Response) => {
 // @desc    Get learning analytics
 // @route   GET /api/users/me/analytics
 // @access  Private
-export const getLearningAnalytics = async (req: AuthRequest, res: Response) => {
+export const getLearningAnalytics = async (req: Request, res: Response) => {
   try {
     const userId = req.user?._id;
 

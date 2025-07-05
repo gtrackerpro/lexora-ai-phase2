@@ -1,12 +1,11 @@
 import { Response } from 'express';
 import LearningPath from '../models/LearningPath';
 import Topic from '../models/Topic';
-import { AuthRequest } from '../middleware/auth';
 
 // @desc    Create new learning path
 // @route   POST /api/learning-paths
 // @access  Private
-export const createLearningPath = async (req: AuthRequest, res: Response) => {
+export const createLearningPath = async (req: Request, res: Response) => {
   try {
     const { topicId, title, description, weeks, estimatedTotalHours, difficulty, goal } = req.body;
 
@@ -45,7 +44,7 @@ export const createLearningPath = async (req: AuthRequest, res: Response) => {
 // @desc    Get learning paths for a topic
 // @route   GET /api/topics/:topicId/learning-paths
 // @access  Private
-export const getLearningPathsByTopic = async (req: AuthRequest, res: Response) => {
+export const getLearningPathsByTopic = async (req: Request, res: Response) => {
   try {
     const { topicId } = req.params;
 
@@ -79,7 +78,7 @@ export const getLearningPathsByTopic = async (req: AuthRequest, res: Response) =
 // @desc    Get single learning path
 // @route   GET /api/learning-paths/:id
 // @access  Private
-export const getLearningPath = async (req: AuthRequest, res: Response) => {
+export const getLearningPath = async (req: Request, res: Response) => {
   try {
     const learningPath = await LearningPath.findById(req.params.id)
       .populate('topicId', 'title description')

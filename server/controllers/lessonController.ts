@@ -2,14 +2,13 @@ import { Response } from 'express';
 import Lesson from '../models/Lesson';
 import LearningPath from '../models/LearningPath';
 import Video from '../models/Video';
-import { AuthRequest } from '../middleware/auth';
 import groqService from '../services/groqService';
 import videoService from '../services/videoService';
 
 // @desc    Create new lesson
 // @route   POST /api/lessons
 // @access  Private
-export const createLesson = async (req: AuthRequest, res: Response) => {
+export const createLesson = async (req: Request, res: Response) => {
   try {
     const { learningPathId, title, week, day, objectives } = req.body;
 
@@ -61,7 +60,7 @@ export const createLesson = async (req: AuthRequest, res: Response) => {
 // @desc    Get lessons for a learning path
 // @route   GET /api/learning-paths/:pathId/lessons
 // @access  Private
-export const getLessonsByPath = async (req: AuthRequest, res: Response) => {
+export const getLessonsByPath = async (req: Request, res: Response) => {
   try {
     const { pathId } = req.params;
 
@@ -96,7 +95,7 @@ export const getLessonsByPath = async (req: AuthRequest, res: Response) => {
 // @desc    Get single lesson
 // @route   GET /api/lessons/:id
 // @access  Private
-export const getLesson = async (req: AuthRequest, res: Response) => {
+export const getLesson = async (req: Request, res: Response) => {
   try {
     const lesson = await Lesson.findById(req.params.id)
       .populate('learningPathId', 'title description')
@@ -137,7 +136,7 @@ export const getLesson = async (req: AuthRequest, res: Response) => {
 // @desc    Generate video for lesson
 // @route   POST /api/lessons/:id/generate-video
 // @access  Private
-export const generateLessonVideo = async (req: AuthRequest, res: Response) => {
+export const generateLessonVideo = async (req: Request, res: Response) => {
   try {
     const { avatarId, voiceId } = req.body;
     const lessonId = req.params.id;
@@ -185,7 +184,7 @@ export const generateLessonVideo = async (req: AuthRequest, res: Response) => {
 // @desc    Update lesson
 // @route   PUT /api/lessons/:id
 // @access  Private
-export const updateLesson = async (req: AuthRequest, res: Response) => {
+export const updateLesson = async (req: Request, res: Response) => {
   try {
     const { title, content, script, objectives } = req.body;
 
@@ -227,7 +226,7 @@ export const updateLesson = async (req: AuthRequest, res: Response) => {
 // @desc    Delete lesson
 // @route   DELETE /api/lessons/:id
 // @access  Private
-export const deleteLesson = async (req: AuthRequest, res: Response) => {
+export const deleteLesson = async (req: Request, res: Response) => {
   try {
     const lesson = await Lesson.findById(req.params.id);
     if (!lesson) {

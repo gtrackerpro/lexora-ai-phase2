@@ -1,13 +1,12 @@
 import { Response } from 'express';
 import Topic from '../models/Topic';
 import LearningPath from '../models/LearningPath';
-import { AuthRequest } from '../middleware/auth';
 import groqService from '../services/groqService';
 
 // @desc    Create new topic with AI-generated learning path
 // @route   POST /api/topics
 // @access  Private
-export const createTopic = async (req: AuthRequest, res: Response) => {
+export const createTopic = async (req: Request, res: Response) => {
   try {
     const { title, description, tags, difficulty, weeks, goals } = req.body;
 
@@ -80,7 +79,7 @@ export const createTopic = async (req: AuthRequest, res: Response) => {
 // @desc    Get all topics for user
 // @route   GET /api/topics
 // @access  Private
-export const getTopics = async (req: AuthRequest, res: Response) => {
+export const getTopics = async (req: Request, res: Response) => {
   try {
     const topics = await Topic.find({ createdBy: req.user?._id })
       .populate('createdBy', 'displayName')
@@ -103,7 +102,7 @@ export const getTopics = async (req: AuthRequest, res: Response) => {
 // @desc    Get single topic with learning paths
 // @route   GET /api/topics/:id
 // @access  Private
-export const getTopic = async (req: AuthRequest, res: Response) => {
+export const getTopic = async (req: Request, res: Response) => {
   try {
     const topic = await Topic.findById(req.params.id)
       .populate('createdBy', 'displayName');
@@ -146,7 +145,7 @@ export const getTopic = async (req: AuthRequest, res: Response) => {
 // @desc    Update topic
 // @route   PUT /api/topics/:id
 // @access  Private
-export const updateTopic = async (req: AuthRequest, res: Response) => {
+export const updateTopic = async (req: Request, res: Response) => {
   try {
     const { title, description, tags } = req.body;
 
@@ -189,7 +188,7 @@ export const updateTopic = async (req: AuthRequest, res: Response) => {
 // @desc    Delete topic
 // @route   DELETE /api/topics/:id
 // @access  Private
-export const deleteTopic = async (req: AuthRequest, res: Response) => {
+export const deleteTopic = async (req: Request, res: Response) => {
   try {
     const topic = await Topic.findById(req.params.id);
 

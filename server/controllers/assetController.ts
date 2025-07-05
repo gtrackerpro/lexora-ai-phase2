@@ -1,6 +1,5 @@
 import { Response } from 'express';
 import Asset from '../models/Asset';
-import { AuthRequest } from '../middleware/auth';
 import awsService from '../services/awsService';
 import multer from 'multer';
 
@@ -34,7 +33,7 @@ const upload = multer({
 // @desc    Upload asset
 // @route   POST /api/assets/upload
 // @access  Private
-export const uploadAsset = async (req: AuthRequest, res: Response) => {
+export const uploadAsset = async (req: Request, res: Response) => {
   try {
     upload.single('file')(req, res, async (err) => {
       if (err) {
@@ -108,7 +107,7 @@ export const uploadAsset = async (req: AuthRequest, res: Response) => {
 // @desc    Get user's assets
 // @route   GET /api/assets
 // @access  Private
-export const getUserAssets = async (req: AuthRequest, res: Response) => {
+export const getUserAssets = async (req: Request, res: Response) => {
   try {
     const { type } = req.query;
     
@@ -134,7 +133,7 @@ export const getUserAssets = async (req: AuthRequest, res: Response) => {
 // @desc    Get single asset
 // @route   GET /api/assets/:id
 // @access  Private
-export const getAsset = async (req: AuthRequest, res: Response) => {
+export const getAsset = async (req: Request, res: Response) => {
   try {
     const asset = await Asset.findById(req.params.id);
 
@@ -169,7 +168,7 @@ export const getAsset = async (req: AuthRequest, res: Response) => {
 // @desc    Delete asset
 // @route   DELETE /api/assets/:id
 // @access  Private
-export const deleteAsset = async (req: AuthRequest, res: Response) => {
+export const deleteAsset = async (req: Request, res: Response) => {
   try {
     const asset = await Asset.findById(req.params.id);
 
@@ -216,7 +215,7 @@ export const deleteAsset = async (req: AuthRequest, res: Response) => {
 // @desc    Update asset usage
 // @route   PUT /api/assets/:id/usage
 // @access  Private
-export const updateAssetUsage = async (req: AuthRequest, res: Response) => {
+export const updateAssetUsage = async (req: Request, res: Response) => {
   try {
     const { usedIn } = req.body;
     const assetId = req.params.id;
