@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import jwt, { Secret } from 'jsonwebtoken';
-import User from '../models/User';
+import User, { IUser } from '../models/User';
 import { AuthRequest } from '../middleware/auth';
 
 // Validate and declare JWT constants
@@ -46,7 +46,7 @@ export const register = async (req: Request, res: Response) => {
       email,
       password,
       displayName
-    });
+    }) as IUser;
 
     // Generate token
     const token = generateToken(user._id.toString());
@@ -85,7 +85,7 @@ export const login = async (req: Request, res: Response) => {
     }
 
     // Check for user
-    const user = await User.findOne({ email }).select('+password');
+    const user = await User.findOne({ email }).select('+password') as IUser;
     if (!user) {
       return res.status(401).json({
         success: false,
