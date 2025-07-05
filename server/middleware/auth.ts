@@ -15,10 +15,11 @@ export const protect = async (req: AuthRequest, res: Response, next: NextFunctio
     }
 
     if (!token) {
-      return res.status(401).json({
+      res.status(401).json({
         success: false,
         message: 'Not authorized to access this route'
       });
+      return;
     }
 
     try {
@@ -26,24 +27,27 @@ export const protect = async (req: AuthRequest, res: Response, next: NextFunctio
       const user = await User.findById(decoded.id);
 
       if (!user) {
-        return res.status(401).json({
+        res.status(401).json({
           success: false,
           message: 'No user found with this token'
         });
+        return;
       }
 
       req.user = user;
       next();
     } catch (error) {
-      return res.status(401).json({
+      res.status(401).json({
         success: false,
         message: 'Not authorized to access this route'
       });
+      return;
     }
   } catch (error) {
-    return res.status(500).json({
+    res.status(500).json({
       success: false,
       message: 'Server error'
     });
+    return;
   }
 };
