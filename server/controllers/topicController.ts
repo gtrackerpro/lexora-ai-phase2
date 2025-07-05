@@ -1,14 +1,17 @@
 import { Response } from 'express';
 import Topic from '../models/Topic';
+import LearningPath from '../models/LearningPath';
 import { AuthRequest } from '../middleware/auth';
+import groqService from '../services/groqService';
 
-// @desc    Create new topic
+// @desc    Create new topic with AI-generated learning path
 // @route   POST /api/topics
 // @access  Private
 export const createTopic = async (req: AuthRequest, res: Response) => {
   try {
-    const { title, description, tags } = req.body;
+    const { title, description, tags, difficulty, weeks, goals } = req.body;
 
+    // Create the topic first
     const topic = await Topic.create({
       title,
       description,
@@ -16,19 +19,65 @@ export const createTopic = async (req: AuthRequest, res: Response) => {
       createdBy: req.user?._id
     });
 
-    res.status(201).json({
-      success: true,
-      topic
-    });
+    // Generate AI learning path using Groq
+    try {
+      const aiLearningPath = await groqService.generateLearningPath(
+        title,
+        difficulty || 'Beginner',
+        weeks || 6,
+        goals || description
+      );
+
+      // Create learning path from AI response
+      const learningPath = await LearningPath.create({
+        topicId: topic._id,
+        userId: req.user?._id,
+        title: aiLearningPath.title || title,
+        description: aiLearningPath.description || description,
+        weeks: weeks || 6,
+        estimatedTotalHours: aiLearningPath.estimatedTotalHours || (weeks || 6) * 5,
+        difficulty: difficulty || 'Beginner',
+        goal: goals || description
+      });
+
+      res.status(201).json({
+        success: true,
+        topic,
+        learningPath,
+        aiContent: aiLearningPath
+      });
+    } catch (aiError) {
+      console.error('AI Generation Error:', aiError);
+      
+      // Create basic learning path if AI fails
+      const basicLearningPath = await LearningPath.create({
+        topicId: topic._id,
+        userId: req.user?._id,
+        title,
+        description,
+        weeks: weeks || 6,
+        estimatedTotalHours: (weeks || 6) * 5,
+        difficulty: difficulty || 'Beginner',
+        goal: goals || description
+      });
+
+      res.status(201).json({
+        success: true,
+        topic,
+        learningPath: basicLearningPath,
+        message: 'Topic created successfully. AI content generation will be retried.'
+      });
+    }
   } catch (error) {
+    console.error('Topic Creation Error:', error);
     res.status(500).json({
       success: false,
-      message: 'Server error'
+      message: 'Failed to create topic'
     });
   }
 };
 
-// @desc    Get all topics
+// @desc    Get all topics for user
 // @route   GET /api/topics
 // @access  Private
 export const getTopics = async (req: AuthRequest, res: Response) => {
@@ -43,14 +92,15 @@ export const getTopics = async (req: AuthRequest, res: Response) => {
       topics
     });
   } catch (error) {
+    console.error('Get Topics Error:', error);
     res.status(500).json({
       success: false,
-      message: 'Server error'
+      message: 'Failed to fetch topics'
     });
   }
 };
 
-// @desc    Get single topic
+// @desc    Get single topic with learning paths
 // @route   GET /api/topics/:id
 // @access  Private
 export const getTopic = async (req: AuthRequest, res: Response) => {
@@ -73,14 +123,106 @@ export const getTopic = async (req: AuthRequest, res: Response) => {
       });
     }
 
+    // Get associated learning paths
+    const learningPaths = await LearningPath.find({ 
+      topicId: topic._id,
+      userId: req.user?._id 
+    });
+
     res.status(200).json({
       success: true,
-      topic
+      topic,
+      learningPaths
     });
   } catch (error) {
+    console.error('Get Topic Error:', error);
     res.status(500).json({
       success: false,
-      message: 'Server error'
+      message: 'Failed to fetch topic'
+    });
+  }
+};
+
+// @desc    Update topic
+// @route   PUT /api/topics/:id
+// @access  Private
+export const updateTopic = async (req: AuthRequest, res: Response) => {
+  try {
+    const { title, description, tags } = req.body;
+
+    const topic = await Topic.findById(req.params.id);
+
+    if (!topic) {
+      return res.status(404).json({
+        success: false,
+        message: 'Topic not found'
+      });
+    }
+
+    // Check if user owns the topic
+    if (topic.createdBy.toString() !== req.user?._id.toString()) {
+      return res.status(403).json({
+        success: false,
+        message: 'Not authorized to update this topic'
+      });
+    }
+
+    const updatedTopic = await Topic.findByIdAndUpdate(
+      req.params.id,
+      { title, description, tags },
+      { new: true, runValidators: true }
+    );
+
+    res.status(200).json({
+      success: true,
+      topic: updatedTopic
+    });
+  } catch (error) {
+    console.error('Update Topic Error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to update topic'
+    });
+  }
+};
+
+// @desc    Delete topic
+// @route   DELETE /api/topics/:id
+// @access  Private
+export const deleteTopic = async (req: AuthRequest, res: Response) => {
+  try {
+    const topic = await Topic.findById(req.params.id);
+
+    if (!topic) {
+      return res.status(404).json({
+        success: false,
+        message: 'Topic not found'
+      });
+    }
+
+    // Check if user owns the topic
+    if (topic.createdBy.toString() !== req.user?._id.toString()) {
+      return res.status(403).json({
+        success: false,
+        message: 'Not authorized to delete this topic'
+      });
+    }
+
+    // Delete associated learning paths
+    await LearningPath.deleteMany({ topicId: topic._id });
+
+    // Delete the topic
+    await Topic.findByIdAndDelete(req.params.id);
+
+    res.status(200).json({
+      success: true,
+      message: 'Topic deleted successfully'
+    });
+  } catch (error) {
+    console.error('Delete Topic Error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to delete topic'
     });
   }
 };

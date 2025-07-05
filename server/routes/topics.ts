@@ -1,5 +1,11 @@
 import express from 'express';
-import { createTopic, getTopics, getTopic } from '../controllers/topicController';
+import { 
+  createTopic, 
+  getTopics, 
+  getTopic, 
+  updateTopic, 
+  deleteTopic 
+} from '../controllers/topicController';
 import { protect } from '../middleware/auth';
 
 const router = express.Router();
@@ -11,6 +17,8 @@ router.route('/')
   .get(getTopics);
 
 router.route('/:id')
-  .get(getTopic);
+  .get(getTopic)
+  .put(updateTopic)
+  .delete(deleteTopic);
 
 export default router;

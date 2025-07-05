@@ -1,7 +1,6 @@
 import axios from 'axios';
-import { AuthResponse, User, Topic, LearningPath } from '../types';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 // Create axios instance
 const api = axios.create({
@@ -33,6 +32,20 @@ api.interceptors.response.use(
   }
 );
 
+// Types
+export interface AuthResponse {
+  success: boolean;
+  token: string;
+  user: any;
+}
+
+export interface ApiResponse<T = any> {
+  success: boolean;
+  message?: string;
+  data?: T;
+  count?: number;
+}
+
 // Auth API
 export const authAPI = {
   register: async (userData: {
@@ -52,12 +65,12 @@ export const authAPI = {
     return response.data;
   },
 
-  getMe: async (): Promise<{ success: boolean; user: User }> => {
+  getMe: async (): Promise<{ success: boolean; user: any }> => {
     const response = await api.get('/users/me');
     return response.data;
   },
 
-  updatePreferences: async (preferences: User['preferences']): Promise<{ success: boolean; user: User }> => {
+  updatePreferences: async (preferences: any): Promise<{ success: boolean; user: any }> => {
     const response = await api.put('/users/me/preferences', { preferences });
     return response.data;
   },
@@ -69,18 +82,35 @@ export const topicsAPI = {
     title: string;
     description: string;
     tags: string[];
-  }): Promise<{ success: boolean; topic: Topic }> => {
+    difficulty?: string;
+    weeks?: number;
+    goals?: string;
+  }): Promise<{ success: boolean; topic: any; learningPath?: any; aiContent?: any }> => {
     const response = await api.post('/topics', topicData);
     return response.data;
   },
 
-  getAll: async (): Promise<{ success: boolean; topics: Topic[]; count: number }> => {
+  getAll: async (): Promise<{ success: boolean; topics: any[]; count: number }> => {
     const response = await api.get('/topics');
     return response.data;
   },
 
-  getById: async (id: string): Promise<{ success: boolean; topic: Topic }> => {
+  getById: async (id: string): Promise<{ success: boolean; topic: any; learningPaths?: any[] }> => {
     const response = await api.get(`/topics/${id}`);
+    return response.data;
+  },
+
+  update: async (id: string, topicData: {
+    title?: string;
+    description?: string;
+    tags?: string[];
+  }): Promise<{ success: boolean; topic: any }> => {
+    const response = await api.put(`/topics/${id}`, topicData);
+    return response.data;
+  },
+
+  delete: async (id: string): Promise<{ success: boolean; message: string }> => {
+    const response = await api.delete(`/topics/${id}`);
     return response.data;
   },
 };
@@ -95,17 +125,17 @@ export const learningPathsAPI = {
     estimatedTotalHours: number;
     difficulty: 'Beginner' | 'Intermediate' | 'Advanced';
     goal: string;
-  }): Promise<{ success: boolean; learningPath: LearningPath }> => {
+  }): Promise<{ success: boolean; learningPath: any }> => {
     const response = await api.post('/learning-paths', pathData);
     return response.data;
   },
 
-  getByTopic: async (topicId: string): Promise<{ success: boolean; learningPaths: LearningPath[]; count: number }> => {
+  getByTopic: async (topicId: string): Promise<{ success: boolean; learningPaths: any[]; count: number }> => {
     const response = await api.get(`/learning-paths/topic/${topicId}`);
     return response.data;
   },
 
-  getById: async (id: string): Promise<{ success: boolean; learningPath: LearningPath }> => {
+  getById: async (id: string): Promise<{ success: boolean; learningPath: any }> => {
     const response = await api.get(`/learning-paths/${id}`);
     return response.data;
   },

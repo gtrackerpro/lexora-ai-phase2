@@ -1,26 +1,40 @@
 import React, { useState } from 'react';
+import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { ArrowLeft, BookOpen, Tag, Plus, X } from 'lucide-react';
-import Layout from '../components/Layout/Layout';
+import {
+  ArrowLeft,
+  Sparkles,
+  Clock,
+  Target,
+  BookOpen,
+  Loader2,
+  Lightbulb,
+  Zap,
+  Plus,
+  X
+} from 'lucide-react';
+import toast from 'react-hot-toast';
 import { topicsAPI } from '../services/api';
 
 const createTopicSchema = z.object({
   title: z.string().min(3, 'Title must be at least 3 characters'),
   description: z.string().min(10, 'Description must be at least 10 characters'),
   tags: z.array(z.string()).min(1, 'At least one tag is required'),
+  difficulty: z.enum(['Beginner', 'Intermediate', 'Advanced']),
+  weeks: z.enum(['4', '6', '8', '12']),
+  goals: z.string().min(10, 'Please describe your learning goals (at least 10 characters)'),
 });
 
 type CreateTopicFormData = z.infer<typeof createTopicSchema>;
 
 const CreateTopic: React.FC = () => {
-  const navigate = useNavigate();
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [isGenerating, setIsGenerating] = useState(false);
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState('');
+  const navigate = useNavigate();
 
   const {
     register,
@@ -31,11 +45,29 @@ const CreateTopic: React.FC = () => {
   } = useForm<CreateTopicFormData>({
     resolver: zodResolver(createTopicSchema),
     defaultValues: {
+      difficulty: 'Beginner',
+      weeks: '6',
       tags: [],
     },
   });
 
-  const watchedTags = watch('tags');
+  const watchedTitle = watch('title');
+
+  const suggestedTopics = [
+    'Python Programming',
+    'Web Development',
+    'Data Science',
+    'Machine Learning',
+    'Digital Marketing',
+    'Graphic Design',
+    'Photography',
+    'Music Production',
+  ];
+
+  const suggestedTags = [
+    'programming', 'web development', 'data science', 'machine learning',
+    'design', 'business', 'marketing', 'photography', 'music', 'language'
+  ];
 
   const addTag = () => {
     if (tagInput.trim() && !tags.includes(tagInput.trim().toLowerCase())) {
@@ -60,193 +92,361 @@ const CreateTopic: React.FC = () => {
   };
 
   const onSubmit = async (data: CreateTopicFormData) => {
-    setIsLoading(true);
-    setError('');
-
+    setIsGenerating(true);
+    
     try {
       const response = await topicsAPI.create({
         title: data.title,
         description: data.description,
         tags: data.tags,
+        difficulty: data.difficulty,
+        weeks: parseInt(data.weeks),
+        goals: data.goals,
       });
 
       if (response.success) {
+        toast.success('Learning path created successfully with AI content!');
         navigate('/dashboard');
       }
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to create topic');
+    } catch (error: any) {
+      console.error('Topic creation error:', error);
+      toast.error(error.response?.data?.message || 'Failed to create learning path. Please try again.');
     } finally {
-      setIsLoading(false);
+      setIsGenerating(false);
     }
   };
 
-  const suggestedTags = [
-    'programming', 'web development', 'data science', 'machine learning',
-    'design', 'business', 'marketing', 'photography', 'music', 'language'
-  ];
+  const handleTopicSuggestion = (topic: string) => {
+    setValue('title', topic);
+  };
 
   return (
-    <Layout>
-      <div className="p-6 max-w-2xl mx-auto">
-        {/* Header */}
-        <div className="flex items-center space-x-4 mb-8">
-          <button
-            onClick={() => navigate('/dashboard')}
-            className="p-2 text-dark-400 hover:text-white transition-colors"
-          >
-            <ArrowLeft className="w-5 h-5" />
-          </button>
-          <div>
-            <h1 className="text-2xl font-bold text-white">Create New Topic</h1>
-            <p className="text-dark-400">Start your personalized learning journey</p>
-          </div>
+    <div className="max-w-4xl mx-auto">
+      {/* Header */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex items-center space-x-4 mb-8"
+      >
+        <button
+          onClick={() => navigate('/dashboard')}
+          className="p-2 hover:bg-dark-700 rounded-lg transition-colors"
+        >
+          <ArrowLeft className="h-6 w-6 text-white" />
+        </button>
+        <div>
+          <h1 className="text-3xl font-bold text-white">Create Learning Path</h1>
+          <p className="text-dark-400 mt-2">Let AI create a personalized learning journey for you</p>
         </div>
+      </motion.div>
 
-        {error && (
-          <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-4 mb-6">
-            <p className="text-red-400 text-sm">{error}</p>
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-          {/* Topic Title */}
-          <div className="bg-dark-900 border border-dark-700 rounded-xl p-6">
-            <label htmlFor="title" className="block text-sm font-medium text-dark-300 mb-3">
-              <BookOpen className="w-4 h-4 inline mr-2" />
-              Topic Title
-            </label>
-            <input
-              {...register('title')}
-              type="text"
-              id="title"
-              className="w-full bg-dark-800 border border-dark-600 rounded-lg px-4 py-3 text-white placeholder-dark-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-              placeholder="e.g., Python Programming Fundamentals"
-            />
-            {errors.title && (
-              <p className="mt-2 text-sm text-red-400">{errors.title.message}</p>
-            )}
-          </div>
-
-          {/* Description */}
-          <div className="bg-dark-900 border border-dark-700 rounded-xl p-6">
-            <label htmlFor="description" className="block text-sm font-medium text-dark-300 mb-3">
-              Description
-            </label>
-            <textarea
-              {...register('description')}
-              id="description"
-              rows={4}
-              className="w-full bg-dark-800 border border-dark-600 rounded-lg px-4 py-3 text-white placeholder-dark-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none"
-              placeholder="Describe what you want to learn and your goals..."
-            />
-            {errors.description && (
-              <p className="mt-2 text-sm text-red-400">{errors.description.message}</p>
-            )}
-          </div>
-
-          {/* Tags */}
-          <div className="bg-dark-900 border border-dark-700 rounded-xl p-6">
-            <label className="block text-sm font-medium text-dark-300 mb-3">
-              <Tag className="w-4 h-4 inline mr-2" />
-              Tags
-            </label>
-            
-            {/* Tag Input */}
-            <div className="flex space-x-2 mb-4">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Form */}
+        <motion.div
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.1 }}
+          className="lg:col-span-2"
+        >
+          <form onSubmit={handleSubmit(onSubmit)} className="card space-y-6">
+            {/* Topic Input */}
+            <div>
+              <label className="block text-sm font-medium text-white mb-2">
+                What would you like to learn?
+              </label>
               <input
+                {...register('title')}
                 type="text"
-                value={tagInput}
-                onChange={(e) => setTagInput(e.target.value)}
-                onKeyPress={handleKeyPress}
-                className="flex-1 bg-dark-800 border border-dark-600 rounded-lg px-4 py-2 text-white placeholder-dark-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                placeholder="Add a tag..."
+                className="input-field w-full"
+                placeholder="e.g., Python Programming, Web Development, Data Science..."
               />
-              <button
-                type="button"
-                onClick={addTag}
-                className="bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg transition-colors"
-              >
-                <Plus className="w-4 h-4" />
-              </button>
+              {errors.title && (
+                <p className="mt-1 text-sm text-red-400">{errors.title.message}</p>
+              )}
+              
+              {/* Topic Suggestions */}
+              {!watchedTitle && (
+                <div className="mt-3">
+                  <p className="text-sm text-dark-400 mb-2">Popular topics:</p>
+                  <div className="flex flex-wrap gap-2">
+                    {suggestedTopics.map((topic) => (
+                      <button
+                        key={topic}
+                        type="button"
+                        onClick={() => handleTopicSuggestion(topic)}
+                        className="px-3 py-1 text-sm bg-dark-700 hover:bg-primary-600 text-white rounded-full transition-colors"
+                      >
+                        {topic}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
 
-            {/* Current Tags */}
-            {tags.length > 0 && (
-              <div className="flex flex-wrap gap-2 mb-4">
-                {tags.map((tag, index) => (
-                  <span
-                    key={index}
-                    className="inline-flex items-center px-3 py-1 bg-primary-500/10 text-primary-400 text-sm rounded-full border border-primary-500/20"
-                  >
-                    {tag}
-                    <button
-                      type="button"
-                      onClick={() => removeTag(tag)}
-                      className="ml-2 text-primary-400 hover:text-primary-300"
-                    >
-                      <X className="w-3 h-3" />
-                    </button>
-                  </span>
-                ))}
-              </div>
-            )}
-
-            {/* Suggested Tags */}
+            {/* Description */}
             <div>
-              <p className="text-xs text-dark-400 mb-2">Suggested tags:</p>
-              <div className="flex flex-wrap gap-2">
-                {suggestedTags
-                  .filter(tag => !tags.includes(tag))
-                  .slice(0, 6)
-                  .map((tag) => (
-                    <button
-                      key={tag}
-                      type="button"
-                      onClick={() => {
-                        const newTags = [...tags, tag];
-                        setTags(newTags);
-                        setValue('tags', newTags);
-                      }}
-                      className="px-3 py-1 bg-dark-800 hover:bg-dark-700 text-dark-300 hover:text-white text-sm rounded-full border border-dark-600 hover:border-dark-500 transition-colors"
+              <label className="block text-sm font-medium text-white mb-2">
+                Description
+              </label>
+              <textarea
+                {...register('description')}
+                rows={3}
+                className="input-field w-full resize-none"
+                placeholder="Describe what you want to learn and your current knowledge level..."
+              />
+              {errors.description && (
+                <p className="mt-1 text-sm text-red-400">{errors.description.message}</p>
+              )}
+            </div>
+
+            {/* Tags */}
+            <div>
+              <label className="block text-sm font-medium text-white mb-2">
+                Tags
+              </label>
+              
+              {/* Tag Input */}
+              <div className="flex space-x-2 mb-4">
+                <input
+                  type="text"
+                  value={tagInput}
+                  onChange={(e) => setTagInput(e.target.value)}
+                  onKeyPress={handleKeyPress}
+                  className="flex-1 input-field"
+                  placeholder="Add a tag..."
+                />
+                <button
+                  type="button"
+                  onClick={addTag}
+                  className="bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg transition-colors"
+                >
+                  <Plus className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Current Tags */}
+              {tags.length > 0 && (
+                <div className="flex flex-wrap gap-2 mb-4">
+                  {tags.map((tag, index) => (
+                    <span
+                      key={index}
+                      className="inline-flex items-center px-3 py-1 bg-primary-500/10 text-primary-400 text-sm rounded-full border border-primary-500/20"
                     >
                       {tag}
-                    </button>
+                      <button
+                        type="button"
+                        onClick={() => removeTag(tag)}
+                        className="ml-2 text-primary-400 hover:text-primary-300"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </span>
                   ))}
+                </div>
+              )}
+
+              {/* Suggested Tags */}
+              <div>
+                <p className="text-xs text-dark-400 mb-2">Suggested tags:</p>
+                <div className="flex flex-wrap gap-2">
+                  {suggestedTags
+                    .filter(tag => !tags.includes(tag))
+                    .slice(0, 6)
+                    .map((tag) => (
+                      <button
+                        key={tag}
+                        type="button"
+                        onClick={() => {
+                          const newTags = [...tags, tag];
+                          setTags(newTags);
+                          setValue('tags', newTags);
+                        }}
+                        className="px-3 py-1 bg-dark-700 hover:bg-dark-600 text-dark-300 hover:text-white text-sm rounded-full border border-dark-600 hover:border-dark-500 transition-colors"
+                      >
+                        {tag}
+                      </button>
+                    ))}
+                </div>
+              </div>
+
+              {errors.tags && (
+                <p className="mt-2 text-sm text-red-400">{errors.tags.message}</p>
+              )}
+            </div>
+
+            {/* Difficulty Level */}
+            <div>
+              <label className="block text-sm font-medium text-white mb-3">
+                What's your current level?
+              </label>
+              <div className="grid grid-cols-3 gap-3">
+                {(['Beginner', 'Intermediate', 'Advanced'] as const).map((level) => (
+                  <label key={level} className="relative">
+                    <input
+                      {...register('difficulty')}
+                      type="radio"
+                      value={level}
+                      className="sr-only peer"
+                    />
+                    <div className="p-4 border-2 border-dark-600 rounded-lg cursor-pointer hover:border-primary-500 transition-colors peer-checked:border-primary-500 peer-checked:bg-primary-500 peer-checked:bg-opacity-10">
+                      <div className="text-center">
+                        <div className="text-lg font-semibold text-white">{level}</div>
+                        <div className="text-sm text-dark-400 mt-1">
+                          {level === 'Beginner' && 'New to this topic'}
+                          {level === 'Intermediate' && 'Some experience'}
+                          {level === 'Advanced' && 'Experienced learner'}
+                        </div>
+                      </div>
+                    </div>
+                  </label>
+                ))}
               </div>
             </div>
 
-            {errors.tags && (
-              <p className="mt-2 text-sm text-red-400">{errors.tags.message}</p>
-            )}
-          </div>
+            {/* Duration */}
+            <div>
+              <label className="block text-sm font-medium text-white mb-3">
+                How long do you want to spend learning?
+              </label>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                {[
+                  { value: '4', label: '4 weeks', desc: 'Quick start' },
+                  { value: '6', label: '6 weeks', desc: 'Balanced' },
+                  { value: '8', label: '8 weeks', desc: 'Thorough' },
+                  { value: '12', label: '12 weeks', desc: 'Comprehensive' },
+                ].map((option) => (
+                  <label key={option.value} className="relative">
+                    <input
+                      {...register('weeks')}
+                      type="radio"
+                      value={option.value}
+                      className="sr-only peer"
+                    />
+                    <div className="p-3 border-2 border-dark-600 rounded-lg cursor-pointer hover:border-primary-500 transition-colors peer-checked:border-primary-500 peer-checked:bg-primary-500 peer-checked:bg-opacity-10">
+                      <div className="text-center">
+                        <div className="font-semibold text-white">{option.label}</div>
+                        <div className="text-xs text-dark-400">{option.desc}</div>
+                      </div>
+                    </div>
+                  </label>
+                ))}
+              </div>
+            </div>
 
-          {/* Submit Button */}
-          <div className="flex space-x-4">
-            <button
-              type="button"
-              onClick={() => navigate('/dashboard')}
-              className="flex-1 bg-dark-800 hover:bg-dark-700 text-white font-medium py-3 px-4 rounded-lg transition-colors"
-            >
-              Cancel
-            </button>
+            {/* Learning Goals */}
+            <div>
+              <label className="block text-sm font-medium text-white mb-2">
+                What are your learning goals?
+              </label>
+              <textarea
+                {...register('goals')}
+                rows={4}
+                className="input-field w-full resize-none"
+                placeholder="Describe what you want to achieve, any specific skills you want to develop, or projects you want to build..."
+              />
+              {errors.goals && (
+                <p className="mt-1 text-sm text-red-400">{errors.goals.message}</p>
+              )}
+            </div>
+
+            {/* Submit Button */}
             <button
               type="submit"
-              disabled={isLoading}
-              className="flex-1 bg-primary-600 hover:bg-primary-700 disabled:bg-primary-800 text-white font-medium py-3 px-4 rounded-lg transition-colors"
+              disabled={isGenerating}
+              className="w-full btn-primary flex items-center justify-center space-x-2 py-3"
             >
-              {isLoading ? (
-                <div className="flex items-center justify-center">
-                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-                  Creating...
-                </div>
+              {isGenerating ? (
+                <>
+                  <Loader2 className="animate-spin h-5 w-5" />
+                  <span>Generating your learning path...</span>
+                </>
               ) : (
-                'Create Topic'
+                <>
+                  <Sparkles className="h-5 w-5" />
+                  <span>Create Learning Path</span>
+                </>
               )}
             </button>
+          </form>
+        </motion.div>
+
+        {/* Sidebar */}
+        <motion.div
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.2 }}
+          className="space-y-6"
+        >
+          {/* AI Features */}
+          <div className="card">
+            <div className="flex items-center space-x-2 mb-4">
+              <Zap className="h-5 w-5 text-primary-400" />
+              <h3 className="text-lg font-semibold text-white">AI-Powered Learning</h3>
+            </div>
+            <div className="space-y-3">
+              <div className="flex items-start space-x-3">
+                <BookOpen className="h-5 w-5 text-primary-400 mt-0.5" />
+                <div>
+                  <p className="text-white text-sm font-medium">Structured Curriculum</p>
+                  <p className="text-dark-400 text-xs">Week-by-week learning plan</p>
+                </div>
+              </div>
+              <div className="flex items-start space-x-3">
+                <Target className="h-5 w-5 text-green-400 mt-0.5" />
+                <div>
+                  <p className="text-white text-sm font-medium">Personalized Content</p>
+                  <p className="text-dark-400 text-xs">Adapted to your learning style</p>
+                </div>
+              </div>
+              <div className="flex items-start space-x-3">
+                <Clock className="h-5 w-5 text-blue-400 mt-0.5" />
+                <div>
+                  <p className="text-white text-sm font-medium">Progress Tracking</p>
+                  <p className="text-dark-400 text-xs">Monitor your advancement</p>
+                </div>
+              </div>
+            </div>
           </div>
-        </form>
+
+          {/* Tips */}
+          <div className="card">
+            <div className="flex items-center space-x-2 mb-4">
+              <Lightbulb className="h-5 w-5 text-yellow-400" />
+              <h3 className="text-lg font-semibold text-white">Tips for Success</h3>
+            </div>
+            <div className="space-y-3 text-sm">
+              <p className="text-dark-300">
+                <span className="text-white font-medium">Be specific:</span> The more details you provide, the better your personalized learning path will be.
+              </p>
+              <p className="text-dark-300">
+                <span className="text-white font-medium">Set realistic goals:</span> Choose a duration that fits your schedule and commitment level.
+              </p>
+              <p className="text-dark-300">
+                <span className="text-white font-medium">Stay consistent:</span> Regular practice is key to mastering any skill.
+              </p>
+            </div>
+          </div>
+
+          {/* Generation Process */}
+          {isGenerating && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="card bg-gradient-to-br from-primary-600 to-primary-700"
+            >
+              <div className="text-center">
+                <Sparkles className="h-8 w-8 text-white mx-auto mb-3 animate-pulse" />
+                <h3 className="text-white font-semibold mb-2">Creating Your Path</h3>
+                <p className="text-primary-100 text-sm">
+                  Our AI is analyzing your preferences and generating a personalized learning curriculum...
+                </p>
+              </div>
+            </motion.div>
+          )}
+        </motion.div>
       </div>
-    </Layout>
+    </div>
   );
 };
 
