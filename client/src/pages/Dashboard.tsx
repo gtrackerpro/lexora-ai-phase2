@@ -25,6 +25,7 @@ const Dashboard: React.FC = () => {
   const mockTopics = [
     {
       id: '1',
+      _id: '1',
       title: 'Python Programming Masterclass',
       description: 'Learn Python from scratch to advanced concepts with hands-on projects and real-world applications.',
       progress: 65,
@@ -36,6 +37,7 @@ const Dashboard: React.FC = () => {
     },
     {
       id: '2',
+      _id: '2',
       title: 'Web Development Fundamentals',
       description: 'Master HTML, CSS, and JavaScript to build modern, responsive websites from the ground up.',
       progress: 30,
@@ -47,6 +49,7 @@ const Dashboard: React.FC = () => {
     },
     {
       id: '3',
+      _id: '3',
       title: 'Data Science with Python',
       description: 'Dive into data analysis, visualization, and machine learning using Python and popular libraries.',
       progress: 0,
@@ -58,6 +61,7 @@ const Dashboard: React.FC = () => {
     },
     {
       id: '4',
+      _id: '4',
       title: 'Machine Learning Fundamentals',
       description: 'Understand the core concepts of machine learning and build your first AI models.',
       progress: 100,
@@ -222,6 +226,7 @@ const Dashboard: React.FC = () => {
                 key={topic.id}
                 title={topic.title}
                 description={topic.description}
+                topic={topic}
                 progress={topic.progress}
                 totalLessons={topic.totalLessons}
                 completedLessons={topic.completedLessons}
