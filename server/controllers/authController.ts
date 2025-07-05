@@ -21,7 +21,7 @@ const JWT_SECRET_TYPED: Secret = JWT_SECRET;
 // Generate JWT Token
 const generateToken = (id: string): string => {
   return jwt.sign({ id }, JWT_SECRET_TYPED, {
-    expiresIn: JWT_EXPIRE!
+    expiresIn: JWT_EXPIRE! as any
   });
 };
 
