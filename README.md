@@ -1,267 +1,335 @@
-Lexora: Guided by AI. Powered by You – An AI-Powered Learning Platform with Personalized Narrated Lessons
+# Lexora - AI-Powered Learning Platform
 
-Build a full-stack AI education platform called Lexora — a personalized, avatar-narrated learning system that generates structured lessons from any topic using AI. Users can upload their own avatars, select a voice, and receive lifelike, narrated video lessons auto-generated using open-source tools. This MVP should be functional, scalable, and modern in UI/UX, built entirely with free or open-source technologies.
+<div align="center">
+  <img src="client/public/lexora-logo.png" alt="Lexora Logo" width="120" height="120">
+  
+  **Guided by AI. Powered by You.**
+  
+  An AI-Powered Learning Platform with Personalized Narrated Lessons
+</div>
 
-🔥 Core Features:
-User Login & Profile – Email/password auth, avatar and voice preference storage
+## 🚀 Overview
 
-Topic-Based AI Learning Path – User enters a topic (e.g., “Python Basics”) → platform creates a 6-week structured plan with lessons
+Lexora is a full-stack AI education platform that generates structured lessons from any topic using AI. Users can upload their own avatars, select a voice, and receive lifelike, narrated video lessons auto-generated using open-source tools. This MVP is functional, scalable, and modern in UI/UX, built entirely with free or open-source technologies.
 
-Lesson Narration & Video Generation –
+## ✨ Core Features
 
-Each lesson gets a narration script from LLaMA 3
+- **User Authentication** - Email/password auth with avatar and voice preference storage
+- **AI Learning Path Generation** - Enter any topic and get a structured 6-week learning plan
+- **Lesson Narration & Video Generation** - AI-generated scripts with avatar-synced videos
+- **Progress Tracking** - Clean viewer interface with transcripts and user notes
+- **Asset Management** - Upload and manage avatars, audio, and video files
+- **Dark Theme UI** - Modern, responsive design with smooth animations
 
-Convert to audio using gTTS
+## 🛠️ Tech Stack
 
-Sync audio with user-uploaded avatar using Wav2Lip
+### Frontend
+- **React 18** with TypeScript
+- **Tailwind CSS** for styling
+- **Framer Motion** for animations
+- **React Hook Form** with Zod validation
+- **React Router** for navigation
+- **Axios** for API calls
 
-Asset Storage – Avatars, audio, and videos are uploaded to S3
+### Backend
+- **Node.js** with Express.js
+- **TypeScript** for type safety
+- **MongoDB** with Mongoose ODM
+- **JWT** for authentication
+- **bcryptjs** for password hashing
 
-Lesson Playback & Progress Tracking – Clean viewer interface with transcript, video, and user notes
+### AI & Media Processing
+- **LLaMA 3** via Groq/OpenRouter for content generation
+- **gTTS** (Google Text-to-Speech) for narration
+- **Wav2Lip** for avatar video syncing
+- **AWS S3** for asset storage
 
+## 📋 Prerequisites
 
-🎨 UI/UX Requirements
-Use Tailwind CSS with full dark theme styling
+Before you begin, ensure you have the following installed:
 
-Dashboard with cards for topics, progress meters, and lesson thumbnails
+- **Node.js** (v18 or higher) - [Download here](https://nodejs.org/)
+- **npm** (comes with Node.js)
+- **MongoDB** - [Install locally](https://docs.mongodb.com/manual/installation/) or use [MongoDB Atlas](https://www.mongodb.com/cloud/atlas)
+- **Git** - [Download here](https://git-scm.com/)
 
-Lesson viewer: includes video player, transcript pane, and user notes
+## 🔧 Installation & Setup
 
-Smooth transitions using Framer Motion or similar
+### 1. Clone the Repository
 
-Avatar upload modal and voice preference selector
+```bash
+git clone <repository-url>
+cd lexora-mern-platform
+```
 
-🔧 Tech Stack (Free/Open Tools Only)
-Frontend: React/Next.js + Tailwind CSS
+### 2. Install Dependencies
 
-Backend: Node.js, Express.js
+Install dependencies for both client and server:
 
-Database: MongoDB Atlas
+```bash
+# Install root dependencies
+npm install
 
-AI Services: LLaMA 3 via Groq/OpenRouter
+# Install all dependencies (client + server)
+npm run install:all
+```
 
-Narration: gTTS (Google Text-to-Speech)
+### 3. Environment Configuration
 
-Video Generation: Wav2Lip (open-source avatar syncing)
+#### Server Environment Setup
 
-Storage: AWS S3 
+Create a `.env` file in the `server` directory:
 
-✅ MVP Goals
-Full user auth with avatar & voice selection
+```bash
+cd server
+cp .env.example .env
+```
 
-Topic input → generates learning path & lessons
+Edit the `.env` file with your configuration:
 
-Script → gTTS → Wav2Lip → video asset
+```env
+# Server Configuration
+NODE_ENV=development
+PORT=5000
 
-User can play lesson video, view transcript, and track progress
+# Database
+MONGODB_URI=mongodb://localhost:27017/lexora
+# Or use MongoDB Atlas:
+# MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/lexora
 
-Build the platform using modular flows and visual builders. All media should be managed via asset references and upload workflows. Ensure a developer-friendly structure for future integrations like analytics or payment systems.
-
-
-Database Schema, Application Flow & API Design
-
-📦 Collections Overview
-
-Collection : Purpose
-
-users : User authentication, preferences, avatar info
-
-topics : High-level subject or domain
-
-learning_paths : Structured plan under each topic
-
-lessons : Daily/weekly learning content
-
-videos : AI-generated avatar-narrated videos
-
-progress : User progress tracking
-
-assets : Avatar, audio, video, script files
-
-🧑‍💻 USERS
-
-{
-  "_id": "ObjectId",
-  "email": "user@example.com",
-  "password_hash": "<hashed>",
-  "display_name": "John Doe",
-  "avatar_id": "ObjectId",     // asset
-  "voice_id": "ObjectId",      // asset
-  "preferences": {
-    "gender_voice": "neutral",
-    "learning_style": "visual"
-  },
-  "created_at": "ISODate",
-  "last_login": "ISODate"
-}
-
-📚 TOPICS
-
-{
-  "_id": "ObjectId",
-  "title": "Python Programming",
-  "description": "Learn Python from scratch...",
-  "tags": ["python", "programming", "backend"],
-  "created_by": "ObjectId",
-  "created_at": "ISODate"
-}
-
-🧭 LEARNING_PATHS
-
-{
-  "_id": "ObjectId",
-  "topic_id": "ObjectId",
-  "user_id": "ObjectId",
-  "title": "6-Week Python Programming Masterclass",
-  "description": "From beginner to advanced topics.",
-  "weeks": 6,
-  "estimated_total_hours": 40,
-  "difficulty": "Beginner",
-  "goal": "Become job-ready in Python",
-  "created_at": "ISODate"
-}
-
-📘 LESSONS
-
-{
-  "_id": "ObjectId",
-  "learning_path_id": "ObjectId",
-  "topic_id": "ObjectId",
-  "user_id": "ObjectId",
-  "title": "Week 1 - Introduction to Python",
-  "week": 1,
-  "day": 1,
-  "content": "Overview of Python syntax and print().",
-  "script": "Welcome to Day 1...",
-  "objectives": ["Learn variables", "Understand print function"],
-  "status": "finalized",
-  "created_at": "ISODate"
-}
-
-🎬 VIDEOS
-
-{
-  "_id": "ObjectId",
-  "lesson_id": "ObjectId",
-  "user_id": "ObjectId",
-  "video_url": "https://cdn/videos/lesson1.mp4",
-  "audio_url": "https://cdn/audio/lesson1.mp3",
-  "avatar_id": "ObjectId",
-  "voice_id": "ObjectId",
-  "duration_sec": 95,
-  "generated_at": "ISODate"
-}
-
-📈 PROGRESS
-
-{
-  "_id": "ObjectId",
-  "user_id": "ObjectId",
-  "lesson_id": "ObjectId",
-  "learning_path_id": "ObjectId",
-  "topic_id": "ObjectId",
-  "video_id": "ObjectId",
-  "watched_percentage": 85,
-  "completed": true,
-  "completed_at": "ISODate",
-  "notes": ["Revisit OOP"],
-  "revisits": [
-    { "timestamp": "ISODate", "watched_percent": 45 }
-  ]
-}
-
-🖼️ ASSETS
-
-{
-  "_id": "ObjectId",
-  "user_id": "ObjectId",
-  "type": "avatar",
-  "file_url": "https://cdn/assets/avatar123.png",
-  "file_name": "avatar123.png",
-  "used_in": ["ObjectId"],
-  "created_at": "ISODate"
-}
-
-🔁 Flow Summary
-
-User signs up → uploads avatar and chooses voice.
-
-User inputs a topic → platform generates a Topic + Learning Path.
-
-Each Learning Path has structured Lessons (week/day-wise).
-
-Each Lesson gets:
-
-Narration script from LLM
-
-Audio via gTTS
-
-Avatar + audio merged via Wav2Lip → creates video.
-
-User views video, marks complete → Progress saved.
-
-Assets (audio, avatar, video) stored in S3/R2, tracked in assets.
-
-🌐 REST API Endpoint Design (Scalable)
-
-🧑‍💻 Users
-
-POST /api/auth/register
-
-POST /api/auth/login
-
-GET /api/users/me
-
-PUT /api/users/me/preferences
-
-📚 Topics
-
-POST /api/topics
-
-GET /api/topics
-
-GET /api/topics/:id
-
-🧭 Learning Paths
-
-POST /api/learning-paths
-
-GET /api/topics/:topicId/learning-paths
-
-GET /api/learning-paths/:id
-
-PUT /api/learning-paths/:id
-
-📘 Lessons
-
-POST /api/lessons
-
-GET /api/learning-paths/:pathId/lessons
-
-GET /api/lessons/:id
-
-PUT /api/lessons/:id
-
-🎬 Videos
-
-POST /api/videos → triggers Wav2Lip + gTTS job
-
-GET /api/lessons/:lessonId/videos
-
-GET /api/videos/:id
-
-📈 Progress
-
-POST /api/progress
-
-GET /api/users/me/progress
-
-GET /api/lessons/:lessonId/progress
-
-🖼️ Assets (Uploads)
-
-POST /api/assets/upload (signed URL or direct)
-
-GET /api/assets/:id
-
-DELETE /api/assets/:id
+# JWT Configuration
+JWT_SECRET=your-super-secret-jwt-key-here-make-it-long-and-random
+JWT_EXPIRE=7d
+
+# AWS S3 Configuration (Optional for file uploads)
+AWS_ACCESS_KEY_ID=your-aws-access-key
+AWS_SECRET_ACCESS_KEY=your-aws-secret-key
+AWS_BUCKET_NAME=lexora-assets
+AWS_REGION=us-east-1
+
+# AI Services (Optional for AI features)
+GROQ_API_KEY=your-groq-api-key
+OPENROUTER_API_KEY=your-openrouter-api-key
+
+# Frontend URL
+CLIENT_URL=http://localhost:5173
+```
+
+#### Client Environment Setup
+
+The client uses Vite's proxy configuration, so no additional environment setup is needed for development.
+
+### 4. Database Setup
+
+#### Option A: Local MongoDB
+
+1. Install MongoDB locally
+2. Start MongoDB service:
+   ```bash
+   # On macOS with Homebrew
+   brew services start mongodb-community
+   
+   # On Ubuntu/Debian
+   sudo systemctl start mongod
+   
+   # On Windows
+   net start MongoDB
+   ```
+
+#### Option B: MongoDB Atlas (Recommended)
+
+1. Create a free account at [MongoDB Atlas](https://www.mongodb.com/cloud/atlas)
+2. Create a new cluster
+3. Get your connection string
+4. Update `MONGODB_URI` in your `.env` file
+
+## 🚀 Running the Application
+
+### Development Mode
+
+Start both client and server in development mode:
+
+```bash
+# From the root directory
+npm run dev
+```
+
+This will start:
+- **Backend server** on `http://localhost:5000`
+- **Frontend client** on `http://localhost:5173`
+
+### Individual Services
+
+You can also run services individually:
+
+```bash
+# Start only the backend server
+npm run server:dev
+
+# Start only the frontend client
+npm run client:dev
+```
+
+### Production Build
+
+```bash
+# Build the application
+npm run build
+
+# Start production server
+npm start
+```
+
+## 📁 Project Structure
+
+```
+lexora-mern-platform/
+├── client/                 # React frontend
+│   ├── public/            # Static assets
+│   ├── src/
+│   │   ├── components/    # Reusable UI components
+│   │   ├── contexts/      # React contexts
+│   │   ├── pages/         # Page components
+│   │   ├── services/      # API services
+│   │   ├── types/         # TypeScript types
+│   │   └── index.css      # Global styles
+│   ├── package.json
+│   └── vite.config.ts
+├── server/                # Node.js backend
+│   ├── config/           # Database configuration
+│   ├── controllers/      # Route controllers
+│   ├── middleware/       # Express middleware
+│   ├── models/          # MongoDB models
+│   ├── routes/          # API routes
+│   ├── package.json
+│   └── server.ts
+├── package.json         # Root package.json
+└── README.md
+```
+
+## 🔗 API Endpoints
+
+### Authentication
+- `POST /api/auth/register` - User registration
+- `POST /api/auth/login` - User login
+- `GET /api/users/me` - Get current user
+- `PUT /api/users/me/preferences` - Update user preferences
+
+### Topics
+- `POST /api/topics` - Create new topic
+- `GET /api/topics` - Get user's topics
+- `GET /api/topics/:id` - Get specific topic
+
+### Learning Paths
+- `POST /api/learning-paths` - Create learning path
+- `GET /api/topics/:topicId/learning-paths` - Get paths for topic
+- `GET /api/learning-paths/:id` - Get specific learning path
+
+## 🎨 UI/UX Features
+
+- **Full Dark Theme** - Modern dark interface with Tailwind CSS
+- **Responsive Design** - Works on desktop, tablet, and mobile
+- **Smooth Animations** - Framer Motion for enhanced user experience
+- **Form Validation** - Real-time validation with helpful error messages
+- **Loading States** - Proper loading indicators and skeleton screens
+- **Toast Notifications** - User feedback for actions
+
+## 🧪 Testing
+
+```bash
+# Run tests (when implemented)
+npm test
+
+# Run tests in watch mode
+npm run test:watch
+```
+
+## 🔧 Development Tools
+
+### Code Quality
+- **TypeScript** for type safety
+- **ESLint** for code linting
+- **Prettier** for code formatting
+
+### Database Tools
+- **MongoDB Compass** - GUI for MongoDB
+- **Mongoose** - ODM for MongoDB
+
+## 📦 Database Schema
+
+### Collections Overview
+
+| Collection | Purpose |
+|------------|---------|
+| `users` | User authentication, preferences, avatar info |
+| `topics` | High-level subject or domain |
+| `learning_paths` | Structured plan under each topic |
+| `lessons` | Daily/weekly learning content |
+| `videos` | AI-generated avatar-narrated videos |
+| `progress` | User progress tracking |
+| `assets` | Avatar, audio, video, script files |
+
+## 🚨 Troubleshooting
+
+### Common Issues
+
+1. **MongoDB Connection Error**
+   ```
+   Error: connect ECONNREFUSED 127.0.0.1:27017
+   ```
+   - Ensure MongoDB is running locally or check your Atlas connection string
+
+2. **Port Already in Use**
+   ```
+   Error: listen EADDRINUSE: address already in use :::5000
+   ```
+   - Kill the process using the port or change the PORT in `.env`
+
+3. **Module Not Found Errors**
+   ```
+   Cannot find module 'xyz'
+   ```
+   - Run `npm install` in the appropriate directory (client/server)
+
+4. **TypeScript Compilation Errors**
+   - Ensure all dependencies are installed
+   - Check for missing type definitions
+
+### Getting Help
+
+1. Check the console for detailed error messages
+2. Verify all environment variables are set correctly
+3. Ensure MongoDB is running and accessible
+4. Check that all dependencies are installed
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🙏 Acknowledgments
+
+- **React Team** for the amazing framework
+- **Tailwind CSS** for the utility-first CSS framework
+- **MongoDB** for the flexible database solution
+- **OpenAI/Groq** for AI capabilities
+- **Framer Motion** for smooth animations
+
+---
+
+<div align="center">
+  <p>Built with ❤️ by the Lexora Team</p>
+  <p>
+    <a href="#-overview">Overview</a> •
+    <a href="#-installation--setup">Installation</a> •
+    <a href="#-running-the-application">Usage</a> •
+    <a href="#-api-endpoints">API</a>
+  </p>
+</div>

@@ -1,5 +1,6 @@
 import React from 'react';
 import { Search, Bell, User, LogOut } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 
 const Header: React.FC = () => {
@@ -9,9 +10,16 @@ const Header: React.FC = () => {
     <header className="bg-dark-900 border-b border-dark-700 px-6 py-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
-          <h1 className="text-2xl font-bold text-white">
-            Lexora
-          </h1>
+          <Link to="/dashboard" className="flex items-center space-x-2">
+            <img 
+              src="/lexora-logo.png" 
+              alt="Lexora Logo" 
+              className="h-8 w-8"
+            />
+            <span className="text-xl font-bold bg-gradient-to-r from-primary-400 to-primary-600 bg-clip-text text-transparent">
+              Lexora
+            </span>
+          </Link>
         </div>
 
         <div className="flex-1 max-w-md mx-8">
