@@ -15,9 +15,12 @@ if (!JWT_EXPIRE) {
   throw new Error('JWT_EXPIRE environment variable is required');
 }
 
+// Properly typed JWT secret constant
+const JWT_SECRET_TYPED: Secret = JWT_SECRET;
+
 // Generate JWT Token
 const generateToken = (id: string): string => {
-  return jwt.sign({ id }, JWT_SECRET! as Secret, {
+  return jwt.sign({ id }, JWT_SECRET_TYPED, {
     expiresIn: JWT_EXPIRE!
   });
 };
