@@ -2,6 +2,9 @@ export interface User {
   id: string;
   email: string;
   displayName: string;
+  avatar?: string;
+  googleId?: string;
+  authProvider?: 'local' | 'google';
   avatarId?: string;
   voiceId?: string;
   preferences: {

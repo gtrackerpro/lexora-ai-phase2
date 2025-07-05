@@ -7,6 +7,7 @@ interface AuthContextType {
   token: string | null;
   login: (email: string, password: string) => Promise<void>;
   register: (email: string, password: string, displayName: string) => Promise<void>;
+  loginWithToken: (token: string, user: User) => Promise<void>;
   logout: () => void;
   loading: boolean;
   updateUser: (user: User) => void;
@@ -87,6 +88,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const loginWithToken = async (token: string, user: User) => {
+    try {
+      localStorage.setItem('lexora_token', token);
+      localStorage.setItem('lexora_user', JSON.stringify(user));
+      
+      setToken(token);
+      setUser(user);
+    } catch (error) {
+      throw error;
+    }
+  };
+
   const logout = () => {
     setToken(null);
     setUser(null);
@@ -104,6 +117,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     token,
     login,
     register,
+    loginWithToken,
     logout,
     loading,
     updateUser,

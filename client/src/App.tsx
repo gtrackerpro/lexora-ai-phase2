@@ -4,6 +4,7 @@ import { AuthProvider } from './contexts/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import LoginForm from './components/Auth/LoginForm';
 import RegisterForm from './components/Auth/RegisterForm';
+import AuthCallback from './pages/AuthCallback';
 import Dashboard from './pages/Dashboard';
 import CreateTopic from './pages/CreateTopic';
 
@@ -15,6 +16,7 @@ function App() {
           <Routes>
             <Route path="/login" element={<LoginForm />} />
             <Route path="/register" element={<RegisterForm />} />
+            <Route path="/auth/callback" element={<AuthCallback />} />
             <Route
               path="/dashboard"
               element={
