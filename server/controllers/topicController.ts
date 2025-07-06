@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import Topic from '../models/Topic';
 import LearningPath from '../models/LearningPath';
 import groqService from '../services/groqService';
+import lessonGenerationService from '../services/lessonGenerationService';
 
 // @desc    Create new topic with AI-generated learning path
 // @route   POST /api/topics
@@ -39,31 +40,39 @@ export const createTopic = async (req: Request, res: Response) => {
         goal: goals || description
       });
 
+      // Generate lessons for the learning path
+      try {
+        console.log('Starting lesson generation for learning path:', learningPath._id);
+        const lessons = await lessonGenerationService.generateAllLessons(
+          learningPath._id.toString(),
+          req.user?._id
+        );
+        console.log(`Generated ${lessons.length} lessons for learning path`);
+        
+        res.status(201).json({
+          success: true,
+          topic,
+          learningPath,
+          lessons,
+          aiContent: aiLearningPath,
+          message: `Learning path created with ${lessons.length} AI-generated lessons!`
+        });
+      } catch (lessonError) {
+        console.error('Lesson Generation Error:', lessonError);
+        // Return success even if lesson generation fails
+        res.status(201).json({
+          success: true,
+          topic,
+          learningPath,
+          aiContent: aiLearningPath,
+          message: 'Learning path created successfully. Lessons will be generated in the background.'
+        });
+      }
+    } catch (aiError) {
       res.status(201).json({
         success: true,
         topic,
         learningPath,
-        aiContent: aiLearningPath
-      });
-    } catch (aiError) {
-      console.error('AI Generation Error:', aiError);
-      
-      // Create basic learning path if AI fails
-      const basicLearningPath = await LearningPath.create({
-        topicId: topic._id,
-        userId: req.user?._id,
-        title,
-        description,
-        weeks: weeks || 6,
-        estimatedTotalHours: (weeks || 6) * 5,
-        difficulty: difficulty || 'Beginner',
-        goal: goals || description
-      });
-
-      res.status(201).json({
-        success: true,
-        topic,
-        learningPath: basicLearningPath,
         message: 'Topic created successfully. AI content generation will be retried.'
       });
     }
