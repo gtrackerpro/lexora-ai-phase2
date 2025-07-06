@@ -1,12 +1,12 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
-import User, { IUser } from '../models/User';
+import ServerUser, { IUser as IServerUser } from '../models/User';
 
 // Extend Express Request interface to include user property
 declare global {
   namespace Express {
     interface Request {
-      user?: IUser;
+      user?: IServerUser;
     }
   }
 }
@@ -29,7 +29,7 @@ export const protect = async (req: Request, res: Response, next: NextFunction) =
 
     try {
       const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as { id: string };
-      const user = await User.findById(decoded.id);
+      const user = await ServerUser.findById(decoded.id);
 
       if (!user) {
         res.status(401).json({

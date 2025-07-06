@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import jwt, { Secret } from 'jsonwebtoken';
 import { HydratedDocument } from 'mongoose';
-import User, { IUser } from '../models/User';
+import ServerUser, { IUser as IServerUser } from '../models/User';
 import passport from '../config/passport';
 
 // Validate and declare JWT constants
@@ -34,7 +34,7 @@ export const register = async (req: Request, res: Response) => {
     const { email, password, displayName } = req.body;
 
     // Check if user exists
-    const existingUser = await User.findOne({ email });
+    const existingUser = await ServerUser.findOne({ email });
     if (existingUser) {
       return res.status(400).json({
         success: false,
@@ -43,12 +43,12 @@ export const register = async (req: Request, res: Response) => {
     }
 
     // Create user
-    const user = await User.create({
+    const user = await ServerUser.create({
       email,
       password,
       displayName,
       authProvider: 'local'
-    }) as IUser;
+    }) as IServerUser;
 
     // Generate token
     const token = generateToken(user._id.toString());
@@ -87,7 +87,7 @@ export const login = async (req: Request, res: Response) => {
     }
 
     // Check for user
-    const user = await User.findOne({ email }).select('+password') as HydratedDocument<IUser>;
+    const user = await ServerUser.findOne({ email }).select('+password') as HydratedDocument<IServerUser>;
     if (!user) {
       return res.status(401).json({
         success: false,
@@ -140,7 +140,7 @@ export const googleAuth = passport.authenticate('google', {
 // @route   GET /api/auth/google/callback
 // @access  Public
 export const googleCallback = (req: Request, res: Response) => {
-  passport.authenticate('google', { session: false }, (err: any, user: HydratedDocument<IUser>) => {
+  passport.authenticate('google', { session: false }, (err: any, user: HydratedDocument<IServerUser>) => {
     if (err) {
       console.error('Google OAuth callback error:', err);
       return res.redirect(`${process.env.CLIENT_URL}/login?error=oauth_error`);
@@ -169,7 +169,7 @@ export const googleCallback = (req: Request, res: Response) => {
 // @access  Private
 export const getMe = async (req: Request, res: Response) => {
   try {
-    const user = await User.findById(req.user?._id);
+    const user = await ServerUser.findById(req.user?._id);
     
     res.status(200).json({
       success: true,
@@ -190,7 +190,7 @@ export const updatePreferences = async (req: Request, res: Response) => {
   try {
     const { preferences } = req.body;
 
-    const user = await User.findByIdAndUpdate(
+    const user = await ServerUser.findByIdAndUpdate(
       req.user?._id,
       { preferences },
       { new: true, runValidators: true }
