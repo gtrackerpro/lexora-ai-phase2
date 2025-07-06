@@ -1,5 +1,4 @@
 import React from 'react';
-import { motion } from 'framer-motion';
 import { useUserProgress } from '../../hooks/useProgress';
 import { Clock, BookOpen, Video, CheckCircle } from 'lucide-react';
 import LoadingCard from '../Common/LoadingCard';
@@ -81,23 +80,13 @@ const RecentActivity: React.FC = () => {
   const activities = transformProgressToActivities(progressData);
 
   return (
-    <motion.div 
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="glass-card"
-    >
+    <div className="bg-dark-900/80 border border-dark-800 rounded-lg p-4">
       <h3 className="text-lg font-semibold text-white mb-4">Recent Activity</h3>
       
       {activities.length > 0 ? (
-        <div className="space-y-4">
+        <div className="space-y-3">
           {activities.map((activity, index) => (
-            <motion.div 
-              key={activity.id} 
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: index * 0.1 }}
-              className="flex items-start space-x-3 p-3 rounded-lg hover:bg-dark-800/50 transition-colors"
-            >
+            <div key={activity.id} className="flex items-start space-x-3 p-3 rounded-lg hover:bg-dark-800/50 transition-colors">
             <div className="flex-shrink-0 mt-1">
               {getActivityIcon(activity.type)}
             </div>
@@ -122,7 +111,7 @@ const RecentActivity: React.FC = () => {
             <div className="flex-shrink-0">
               <span className="text-xs text-dark-400">{activity.timestamp}</span>
             </div>
-            </motion.div>
+            </div>
           ))}
         </div>
       ) : (
@@ -134,16 +123,13 @@ const RecentActivity: React.FC = () => {
       )}
 
       {activities.length > 0 && (
-        <motion.button 
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.5 }}
+        <button 
           className="w-full mt-6 text-sm text-primary-400 hover:text-primary-300 transition-colors py-2 rounded-lg hover:bg-dark-800/30"
         >
           View all activity
-        </motion.button>
+        </button>
       )}
-    </motion.div>
+    </div>
   );
 };
 

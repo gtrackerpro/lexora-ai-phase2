@@ -1,5 +1,4 @@
 import React from 'react';
-import { motion } from 'framer-motion';
 
 interface GridProps {
   cols?: 1 | 2 | 3 | 4 | 6 | 12;
@@ -7,7 +6,6 @@ interface GridProps {
   responsive?: boolean;
   className?: string;
   children: React.ReactNode;
-  animate?: boolean;
 }
 
 const gapClasses = {
@@ -22,8 +20,7 @@ export const Grid: React.FC<GridProps> = ({
   gap = 'md', 
   responsive = true, 
   className = '',
-  children,
-  animate = false
+  children
 }) => {
   const baseClasses = `grid ${gapClasses[gap]}`;
   
@@ -45,29 +42,10 @@ export const Grid: React.FC<GridProps> = ({
 
   const gridClasses = `${baseClasses} ${responsiveClasses[cols]} ${className}`;
 
-  if (animate) {
-    return (
-      <motion.div 
-        className={gridClasses}
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3, staggerChildren: 0.1 }}
-      >
-        {React.Children.map(children, (child, index) => (
-          <motion.div
-            key={index}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.1 }}
-          >
-            {child}
-          </motion.div>
-        ))}
-      </motion.div>
-    );
-  }
-
   return <div className={gridClasses}>{children}</div>;
+};
+
+export default Grid;
 };
 
 export default Grid;

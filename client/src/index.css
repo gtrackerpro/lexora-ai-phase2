@@ -46,15 +46,15 @@
 @layer components {
   /* Button Components */
   .btn {
-    @apply inline-flex items-center justify-center px-4 py-2 text-sm font-medium rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-black-950 disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply inline-flex items-center justify-center px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-black-950 disabled:opacity-50 disabled:cursor-not-allowed;
   }
 
   .btn-primary {
-    @apply btn bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-500 hover:to-primary-600 text-white shadow-lg hover:shadow-glow focus:ring-primary-500 transform hover:scale-105 active:scale-95;
+    @apply btn bg-primary-600 hover:bg-primary-500 text-white shadow-md focus:ring-primary-500;
   }
   
   .btn-secondary {
-    @apply btn bg-dark-800 hover:bg-dark-700 text-white border border-dark-700 hover:border-dark-600 shadow-lg hover:shadow-dark-lg;
+    @apply btn bg-dark-800 hover:bg-dark-700 text-white border border-dark-700 hover:border-dark-600;
   }
 
   .btn-ghost {
@@ -62,20 +62,20 @@
   }
 
   .btn-accent {
-    @apply btn bg-gradient-to-r from-accent-600 to-accent-700 hover:from-accent-500 hover:to-accent-600 text-white shadow-lg hover:shadow-glow focus:ring-accent-500 transform hover:scale-105 active:scale-95;
+    @apply btn bg-accent-600 hover:bg-accent-500 text-white shadow-md focus:ring-accent-500;
   }
 
   .btn-success {
-    @apply btn bg-gradient-to-r from-success-600 to-success-700 hover:from-success-500 hover:to-success-600 text-white shadow-lg focus:ring-success-500;
+    @apply btn bg-success-600 hover:bg-success-500 text-white shadow-md focus:ring-success-500;
   }
 
   .btn-error {
-    @apply btn bg-gradient-to-r from-error-600 to-error-700 hover:from-error-500 hover:to-error-600 text-white shadow-lg focus:ring-error-500;
+    @apply btn bg-error-600 hover:bg-error-500 text-white shadow-md focus:ring-error-500;
   }
 
   /* Input Components */
   .input-field {
-    @apply w-full px-4 py-3 bg-dark-900/80 backdrop-blur-sm border border-dark-700 rounded-xl text-white placeholder-dark-400 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent hover:border-dark-600 shadow-inner;
+    @apply w-full px-4 py-2 bg-dark-900/80 border border-dark-700 rounded-lg text-white placeholder-dark-400 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent hover:border-dark-600;
   }
 
   .input-field:focus {
@@ -84,33 +84,33 @@
 
   /* Card Components */
   .card {
-    @apply bg-dark-900/80 backdrop-blur-sm border border-dark-800 rounded-2xl p-6 shadow-dark-xl transition-all duration-300;
+    @apply bg-dark-900/80 border border-dark-800 rounded-lg p-4 transition-all duration-200;
   }
   
   .card-hover {
-    @apply card hover:bg-dark-800/80 hover:border-dark-700 hover:shadow-dark-2xl hover:scale-[1.02] cursor-pointer;
+    @apply card hover:bg-dark-800/80 hover:border-dark-700 cursor-pointer;
   }
 
   .card-glow {
-    @apply card border-primary-800/50 shadow-glow-sm hover:shadow-glow;
+    @apply card border-primary-800/50;
   }
 
   .glass-card {
-    @apply bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-6 shadow-dark-xl;
+    @apply bg-dark-900/80 border border-dark-800 rounded-lg p-4;
   }
 
   /* Navigation Components */
   .nav-link {
-    @apply flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 text-dark-300 hover:text-white hover:bg-dark-800/50;
+    @apply flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-all duration-200 text-dark-300 hover:text-white hover:bg-dark-800/50;
   }
 
   .nav-link.active {
-    @apply bg-gradient-to-r from-primary-600/20 to-primary-700/20 text-primary-400 border border-primary-800/50 shadow-glow-sm;
+    @apply bg-primary-600/20 text-primary-400 border border-primary-800/50;
   }
 
   /* Text Components */
   .text-gradient {
-    @apply bg-gradient-to-r from-primary-400 to-accent-400 bg-clip-text text-transparent;
+    @apply text-primary-400;
   }
 
   .text-glow {
@@ -150,23 +150,23 @@
 
   /* Badge Components */
   .badge {
-    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+    @apply inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium;
   }
 
   .badge-primary {
-    @apply badge bg-primary-600/20 text-primary-400 border border-primary-600/30;
+    @apply badge bg-primary-600/20 text-primary-400;
   }
 
   .badge-success {
-    @apply badge bg-success-600/20 text-success-400 border border-success-600/30;
+    @apply badge bg-success-600/20 text-success-400;
   }
 
   .badge-warning {
-    @apply badge bg-warning-600/20 text-warning-400 border border-warning-600/30;
+    @apply badge bg-warning-600/20 text-warning-400;
   }
 
   .badge-error {
-    @apply badge bg-error-600/20 text-error-400 border border-error-600/30;
+    @apply badge bg-error-600/20 text-error-400;
   }
 
   /* Utility Classes */

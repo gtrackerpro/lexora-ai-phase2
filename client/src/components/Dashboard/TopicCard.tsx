@@ -1,5 +1,4 @@
 import React from 'react';
-import { motion } from 'framer-motion';
 import { Play, Clock, BookOpen, Star, TrendingUp, Award } from 'lucide-react';
 
 interface TopicCardProps {
@@ -44,60 +43,44 @@ const TopicCard: React.FC<TopicCardProps> = ({
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.1 }}
-      whileHover={{ scale: 1.02, y: -8 }}
-      className="group relative overflow-hidden"
-    >
-      {/* Background Glow */}
-      <div className="absolute inset-0 bg-gradient-to-r from-primary-500/10 to-accent-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-2xl blur-xl"></div>
+    <div className="group relative overflow-hidden">
       
       {/* Card */}
-      <div className="relative glass-card hover:border-dark-600 transition-all duration-300 h-full">
+      <div className="relative bg-dark-900/80 border border-dark-800 rounded-lg p-4 hover:border-dark-700 transition-all duration-200 h-full">
         {/* Thumbnail */}
-        <div className="relative h-48 bg-gradient-to-br from-primary-500/20 to-accent-500/20 rounded-xl mb-6 overflow-hidden">
+        <div className="relative h-40 bg-dark-800 rounded-lg mb-4 overflow-hidden">
           {thumbnail ? (
             <img src={thumbnail} alt={title} className="w-full h-full object-cover" />
           ) : (
             <div className="flex items-center justify-center h-full relative">
-              <div className="absolute inset-0 bg-gradient-to-br from-primary-600/30 to-accent-600/30"></div>
               <img 
                 src="/lexora-logo.png" 
                 alt="Lexora" 
-                className="h-16 w-16 object-contain opacity-60 relative z-10"
+                className="h-16 w-16 object-contain opacity-60"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
             </div>
           )}
           
-          {/* Overlay */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-          
           {/* Play Button */}
-          <motion.button
-            initial={{ scale: 0 }}
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
+          <button
             onClick={onContinue}
-            className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300"
+            className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200"
           >
-            <div className="bg-white/20 backdrop-blur-md rounded-full p-4 border border-white/30 hover:bg-white/30 transition-all duration-200">
-              <Play className="h-8 w-8 text-white ml-1" />
+            <div className="bg-primary-600 rounded-full p-3 text-white">
+              <Play className="h-6 w-6 text-white ml-1" />
             </div>
-          </motion.button>
+          </button>
 
           {/* Difficulty Badge */}
           <div className="absolute top-4 right-4">
-            <span className={`badge ${difficultyBadgeColors[difficulty]} backdrop-blur-sm`}>
+            <span className={`badge ${difficultyBadgeColors[difficulty]}`}>
               {difficulty}
             </span>
           </div>
 
           {/* Progress Badge */}
           <div className="absolute top-4 left-4">
-            <div className="bg-black/50 backdrop-blur-sm rounded-lg px-2 py-1 border border-white/20">
+            <div className="bg-black/50 rounded-lg px-2 py-1">
               <span className="text-white text-xs font-medium">{progress}% Complete</span>
             </div>
           </div>
@@ -106,7 +89,7 @@ const TopicCard: React.FC<TopicCardProps> = ({
         {/* Content */}
         <div className="space-y-4">
           <div>
-            <h3 className="text-lg font-bold text-white group-hover:text-gradient transition-all duration-300 line-clamp-2">
+            <h3 className="text-lg font-bold text-white line-clamp-2">
               {title}
             </h3>
             <p className="text-dark-300 text-sm mt-2 line-clamp-2">{description}</p>
@@ -119,12 +102,9 @@ const TopicCard: React.FC<TopicCardProps> = ({
               <span className="text-primary-400 font-semibold">{progress}%</span>
             </div>
             <div className="progress-bar">
-              <motion.div
-                initial={{ width: 0 }}
-                animate={{ width: `${progress}%` }}
-                transition={{ delay: index * 0.1 + 0.3, duration: 1, ease: 'easeOut' }}
-                className="progress-fill"
-              />
+              <div 
+                className="progress-fill" 
+                style={{ width: `${progress}%` }}></div>
             </div>
           </div>
 
@@ -163,9 +143,7 @@ const TopicCard: React.FC<TopicCardProps> = ({
           </div>
 
           {/* Action Button */}
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
+          <button
             onClick={() => {
               if (topic?._id) {
                 // Navigate to learning path instead of generic continue
@@ -174,7 +152,7 @@ const TopicCard: React.FC<TopicCardProps> = ({
                 onContinue();
               }
             }}
-            className="w-full btn-primary py-3 mt-6 group/btn relative overflow-hidden"
+            className="w-full btn-primary py-2 mt-4"
           >
             <div className="absolute inset-0 bg-gradient-to-r from-primary-400 to-accent-400 opacity-0 group-hover/btn:opacity-100 transition-opacity duration-300"></div>
             <div className="relative flex items-center justify-center space-x-2">
@@ -190,24 +168,19 @@ const TopicCard: React.FC<TopicCardProps> = ({
                 </>
               )}
             </div>
-          </motion.button>
+          </button>
         </div>
 
         {/* Achievement Badge */}
         {progress === 100 && (
-          <motion.div
-            initial={{ scale: 0, rotate: -180 }}
-            animate={{ scale: 1, rotate: 0 }}
-            transition={{ delay: 0.5, type: 'spring', stiffness: 200 }}
-            className="absolute -top-2 -right-2"
-          >
-            <div className="bg-gradient-to-r from-warning-500 to-warning-600 rounded-full p-2 shadow-glow">
-              <Award className="h-5 w-5 text-white" />
+          <div className="absolute -top-2 -right-2">
+            <div className="bg-warning-500 rounded-full p-2">
+              <Award className="h-4 w-4 text-white" />
             </div>
-          </motion.div>
+          </div>
         )}
       </div>
-    </motion.div>
+    </div>
   );
 };
 

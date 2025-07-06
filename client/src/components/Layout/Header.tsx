@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence } from 'framer-motion';
 import { 
   BookOpen, 
   User, 
@@ -26,29 +26,18 @@ const Header: React.FC = () => {
   };
 
   return (
-    <motion.header 
-      initial={{ y: -20, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
-      className="sticky top-0 z-50 bg-black-950/80 backdrop-blur-xl border-b border-dark-800/50"
-    >
+    <header className="sticky top-0 z-50 bg-black-950/80 backdrop-blur-xl border-b border-dark-800/50">
       <div className="container-fluid">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <Link to="/dashboard" className="flex items-center space-x-3 group">
-            <motion.div 
-              whileHover={{ scale: 1.05, rotate: 5 }}
-              whileTap={{ scale: 0.95 }}
-              className="relative"
-            >
-              <div className="absolute inset-0 bg-gradient-to-r from-primary-500 to-accent-500 rounded-xl blur opacity-75 group-hover:opacity-100 transition-opacity"></div>
-              <div className="relative p-1 rounded-xl">
-                <img 
-                  src="/lexora-logo.png" 
-                  alt="Lexora Logo" 
-                  className="h-8 w-8 object-contain"
-                />
-              </div>
-            </motion.div>
+            <div className="relative p-1 rounded-xl">
+              <img 
+                src="/lexora-logo.png" 
+                alt="Lexora Logo" 
+                className="h-8 w-8 object-contain"
+              />
+            </div>
             <span className="text-xl font-bold text-gradient hidden sm:block">
               Lexora
             </span>
@@ -70,31 +59,24 @@ const Header: React.FC = () => {
           {/* Right Side */}
           <div className="flex items-center space-x-3">
             {/* Mobile Search */}
-            <button className="p-2.5 text-dark-400 hover:text-white hover:bg-dark-800/50 rounded-xl transition-all duration-200 md:hidden">
+            <button className="p-2.5 text-dark-400 hover:text-white hover:bg-dark-800/50 rounded-lg transition-all duration-200 md:hidden">
               <Search className="h-5 w-5" />
             </button>
 
             {/* Notifications */}
-            <motion.button 
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="relative p-2.5 text-dark-400 hover:text-white hover:bg-dark-800/50 rounded-xl transition-all duration-200 group"
-            >
+            <button className="relative p-2.5 text-dark-400 hover:text-white hover:bg-dark-800/50 rounded-lg transition-all duration-200">
               <Bell className="h-5 w-5" />
               <span className="absolute -top-1 -right-1 w-3 h-3 bg-gradient-to-r from-error-500 to-error-600 rounded-full border-2 border-black-950 animate-pulse"></span>
-              <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-primary-500/20 to-accent-500/20 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-            </motion.button>
+            </button>
 
             {/* Profile Dropdown */}
             <div className="relative">
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
+              <button
                 onClick={() => setIsProfileOpen(!isProfileOpen)}
-                className="flex items-center space-x-3 p-2 hover:bg-dark-800/50 rounded-xl transition-all duration-200 group"
+                className="flex items-center space-x-3 p-2 hover:bg-dark-800/50 rounded-lg transition-all duration-200"
               >
                 <div className="text-right hidden sm:block">
-                  <p className="text-sm font-medium text-white group-hover:text-primary-400 transition-colors">
+                  <p className="text-sm font-medium text-white">
                     {user?.displayName}
                   </p>
                   <p className="text-xs text-dark-400">{user?.email}</p>
@@ -116,7 +98,7 @@ const Header: React.FC = () => {
                 </div>
                 
                 <ChevronDown className={`w-4 h-4 text-dark-400 transition-transform duration-200 ${isProfileOpen ? 'rotate-180' : ''}`} />
-              </motion.button>
+              </button>
 
               {/* Dropdown Menu */}
               <AnimatePresence>
@@ -186,9 +168,9 @@ const Header: React.FC = () => {
             </div>
 
             {/* Mobile Menu Toggle */}
-            <button
+            <button 
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="p-2.5 text-dark-400 hover:text-white hover:bg-dark-800/50 rounded-xl transition-all duration-200 lg:hidden"
+              className="p-2.5 text-dark-400 hover:text-white hover:bg-dark-800/50 rounded-lg transition-all duration-200 lg:hidden"
             >
               {isMobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
             </button>
@@ -208,22 +190,22 @@ const Header: React.FC = () => {
             <div className="container-fluid py-4">
               <div className="space-y-2">
                 <Link
-                  to="/dashboard"
-                  className="block px-4 py-3 text-dark-300 hover:text-white hover:bg-dark-800/50 rounded-xl transition-all duration-200"
+                  to="/dashboard" 
+                  className="block px-4 py-3 text-dark-300 hover:text-white hover:bg-dark-800/50 rounded-lg transition-all duration-200"
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
                   Dashboard
                 </Link>
                 <Link
                   to="/learning"
-                  className="block px-4 py-3 text-dark-300 hover:text-white hover:bg-dark-800/50 rounded-xl transition-all duration-200"
+                  className="block px-4 py-3 text-dark-300 hover:text-white hover:bg-dark-800/50 rounded-lg transition-all duration-200"
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
                   My Learning
                 </Link>
                 <Link
                   to="/progress"
-                  className="block px-4 py-3 text-dark-300 hover:text-white hover:bg-dark-800/50 rounded-xl transition-all duration-200"
+                  className="block px-4 py-3 text-dark-300 hover:text-white hover:bg-dark-800/50 rounded-lg transition-all duration-200"
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
                   Progress
@@ -233,7 +215,7 @@ const Header: React.FC = () => {
           </motion.div>
         )}
       </AnimatePresence>
-    </motion.header>
+    </header>
   );
 };
 
