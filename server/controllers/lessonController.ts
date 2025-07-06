@@ -4,6 +4,7 @@ import LearningPath from '../models/LearningPath';
 import Video from '../models/Video';
 import groqService from '../services/groqService';
 import videoService from '../services/videoService';
+import lessonGenerationService from '../services/lessonGenerationService';
 
 // @desc    Create new lesson
 // @route   POST /api/lessons
@@ -53,6 +54,85 @@ export const createLesson = async (req: Request, res: Response) => {
     res.status(500).json({
       success: false,
       message: 'Failed to create lesson'
+    });
+  }
+};
+
+// @desc    Generate lessons for learning path
+// @route   POST /api/learning-paths/:pathId/generate-lessons
+// @access  Private
+export const generateLessonsForPath = async (req: Request, res: Response) => {
+  try {
+    const { pathId } = req.params;
+    const { week } = req.body; // Optional: generate for specific week
+
+    // Verify learning path exists and belongs to user
+    const learningPath = await LearningPath.findById(pathId);
+    if (!learningPath || learningPath.userId.toString() !== req.user?._id.toString()) {
+      return res.status(404).json({
+        success: false,
+        message: 'Learning path not found'
+      });
+    }
+
+    let lessons;
+    if (week) {
+      // Generate lessons for specific week
+      lessons = await lessonGenerationService.generateWeekLessons(
+        pathId,
+        parseInt(week),
+        req.user?._id
+      );
+    } else {
+      // Generate all lessons
+      lessons = await lessonGenerationService.generateAllLessons(
+        pathId,
+        req.user?._id
+      );
+    }
+
+    res.status(201).json({
+      success: true,
+      count: lessons.length,
+      lessons,
+      message: `Generated ${lessons.length} lessons successfully`
+    });
+  } catch (error) {
+    console.error('Generate Lessons Error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to generate lessons'
+    });
+  }
+};
+
+// @desc    Regenerate lesson content
+// @route   POST /api/lessons/:id/regenerate
+// @access  Private
+export const regenerateLessonContent = async (req: Request, res: Response) => {
+  try {
+    const lessonId = req.params.id;
+
+    const lesson = await Lesson.findById(lessonId);
+    if (!lesson || lesson.userId.toString() !== req.user?._id.toString()) {
+      return res.status(404).json({
+        success: false,
+        message: 'Lesson not found'
+      });
+    }
+
+    const updatedLesson = await lessonGenerationService.regenerateLesson(lessonId);
+
+    res.status(200).json({
+      success: true,
+      lesson: updatedLesson,
+      message: 'Lesson content regenerated successfully'
+    });
+  } catch (error) {
+    console.error('Regenerate Lesson Error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to regenerate lesson content'
     });
   }
 };

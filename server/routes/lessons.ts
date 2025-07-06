@@ -5,7 +5,9 @@ import {
   getLesson,
   generateLessonVideo,
   updateLesson,
-  deleteLesson
+  deleteLesson,
+  generateLessonsForPath,
+  regenerateLessonContent
 } from '../controllers/lessonController';
 import { protect } from '../middleware/auth';
 
@@ -17,7 +19,10 @@ router.post('/', createLesson);
 router.get('/path/:pathId', getLessonsByPath);
 router.get('/:id', getLesson);
 router.post('/:id/generate-video', generateLessonVideo);
+router.post('/:id/regenerate', regenerateLessonContent);
 router.put('/:id', updateLesson);
 router.delete('/:id', deleteLesson);
 
+// Learning path lesson generation
+router.post('/generate/:pathId', generateLessonsForPath);
 export default router;
