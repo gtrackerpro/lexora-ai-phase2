@@ -1,15 +1,9 @@
 import Video, { IVideo } from '../models/Video';
 import Asset from '../models/Asset';
 import Lesson, { ILesson } from '../models/Lesson';
-import awsService from './awsService';
+import avatarVideoService from './avatarVideoService';
+import ttsService from './ttsService';
 import mongoose from 'mongoose';
-import { spawn } from 'child_process';
-import fs from 'fs';
-import path from 'path';
-import { promisify } from 'util';
-
-const writeFile = promisify(fs.writeFile);
-const unlink = promisify(fs.unlink);
 
 interface GenerateVideoParams {
   lessonId: string;
@@ -24,30 +18,37 @@ class VideoService {
     const { lessonId, userId, script, avatarId, voiceId } = params;
 
     try {
-      // Get avatar and voice assets
-      const [avatar, voice] = await Promise.all([
-        Asset.findById(avatarId),
-        Asset.findById(voiceId)
-      ]);
+      // Get lesson details
+      const lesson = await Lesson.findById(lessonId);
+      if (!lesson) {
+        throw new Error('Lesson not found');
+      }
 
-      if (!avatar || !voice) {
-        throw new Error('Avatar or voice asset not found');
+      // Get avatar asset (voice preferences will be handled by TTS service)
+      const avatar = await Asset.findById(avatarId);
+      if (!avatar) {
+        throw new Error('Avatar asset not found');
       }
 
       // Create video record with generating status
       const video = await Video.create({
         lessonId,
         userId,
-        videoUrl: '', // Will be updated after generation
-        audioUrl: '', // Will be updated after generation
+        videoUrl: '',
+        audioUrl: '',
         avatarId,
-        voiceId,
-        durationSec: 0, // Will be calculated
+        voiceId: voiceId || null,
+        durationSec: 0,
         status: 'generating'
       });
 
-      // Start async video generation process
-      this.processVideoGeneration((video._id as mongoose.Types.ObjectId).toString(), script, avatar.fileUrl, voice.fileUrl);
+      // Start async video generation
+      this.processVideoGeneration(
+        (video._id as mongoose.Types.ObjectId).toString(),
+        script,
+        avatar.fileUrl,
+        voiceId
+      );
 
       return video;
     } catch (error) {
@@ -59,46 +60,31 @@ class VideoService {
   private async processVideoGeneration(
     videoId: string, 
     script: string, 
-    avatarUrl: string, 
-    voiceUrl: string
+    avatarUrl: string,
+    voiceId?: string
   ) {
     try {
-      // Generate audio from script using gTTS
-      const audioBuffer = await this.generateAudio(script);
+      console.log(`Starting video generation for ${videoId}`);
       
-      // Upload audio to S3
-      const audioFileName = `audio_${videoId}_${Date.now()}.mp3`;
-      const audioUrl = await awsService.uploadFile(
-        audioBuffer,
-        audioFileName,
-        'audio/mp3',
-        'generated/audio'
+      // Get voice preferences
+      const voiceOptions = await this.getVoiceOptions(voiceId);
+      
+      // Generate complete lesson video with TTS and avatar
+      const result = await avatarVideoService.generateLessonVideo(
+        script,
+        avatarUrl,
+        voiceOptions
       );
 
-      // Generate video using Wav2Lip (simplified simulation)
-      const videoBuffer = await this.generateVideoWithAvatar(avatarUrl, audioBuffer);
-      
-      // Upload video to S3
-      const videoFileName = `video_${videoId}_${Date.now()}.mp4`;
-      const videoUrl = await awsService.uploadFile(
-        videoBuffer,
-        videoFileName,
-        'video/mp4',
-        'generated/videos'
-      );
-
-      // Calculate duration (simplified - would use actual audio/video analysis)
-      const durationSec = Math.max(60, script.length / 10); // Rough estimate
-
-      // Update video record
+      // Update video record with results
       await Video.findByIdAndUpdate(videoId, {
-        videoUrl,
-        audioUrl,
-        durationSec,
+        videoUrl: result.videoUrl,
+        audioUrl: result.audioUrl,
+        durationSec: result.duration,
         status: 'completed'
       });
 
-      console.log(`Video generation completed for ${videoId}`);
+      console.log(`Video generation completed for ${videoId}: ${result.duration}s`);
     } catch (error) {
       console.error(`Video generation failed for ${videoId}:`, error);
       
@@ -109,40 +95,41 @@ class VideoService {
     }
   }
 
-  private async generateAudio(script: string): Promise<Buffer> {
-    // Simulate gTTS audio generation
-    // In a real implementation, you would use the actual gTTS library
-    // or call an external TTS service
-    
-    return new Promise((resolve, reject) => {
-      // For demo purposes, create a simple audio buffer
-      // In production, integrate with actual TTS service
-      const mockAudioData = Buffer.alloc(1024 * 100); // 100KB mock audio
-      mockAudioData.fill(0x80); // Fill with audio-like data
-      
-      setTimeout(() => {
-        resolve(mockAudioData);
-      }, 2000); // Simulate processing time
-    });
-  }
+  private async getVoiceOptions(voiceId?: string): Promise<any> {
+    if (!voiceId) {
+      // Return default voice options
+      return {
+        voice: 'en-US-Standard-D',
+        speed: 1.0,
+        pitch: 0,
+        language: 'en-US'
+      };
+    }
 
-  private async generateVideoWithAvatar(avatarUrl: string, audioBuffer: Buffer): Promise<Buffer> {
-    // Simulate Wav2Lip video generation
-    // In a real implementation, you would:
-    // 1. Download the avatar image
-    // 2. Use Wav2Lip to sync lips with audio
-    // 3. Generate the final video
-    
-    return new Promise((resolve, reject) => {
-      // For demo purposes, create a simple video buffer
-      // In production, integrate with actual Wav2Lip or similar service
-      const mockVideoData = Buffer.alloc(1024 * 1024 * 5); // 5MB mock video
-      mockVideoData.fill(0x00); // Fill with video-like data
-      
-      setTimeout(() => {
-        resolve(mockVideoData);
-      }, 5000); // Simulate processing time
-    });
+    try {
+      // Get voice asset and extract preferences
+      const voiceAsset = await Asset.findById(voiceId);
+      if (voiceAsset) {
+        // Parse voice preferences from asset metadata or filename
+        // This is a simplified implementation
+        return {
+          voice: 'en-US-Standard-D',
+          speed: 1.0,
+          pitch: 0,
+          language: 'en-US'
+        };
+      }
+    } catch (error) {
+      console.error('Error getting voice options:', error);
+    }
+
+    // Fallback to default
+    return {
+      voice: 'en-US-Standard-D',
+      speed: 1.0,
+      pitch: 0,
+      language: 'en-US'
+    };
   }
 
   async getVideoStatus(videoId: string) {
@@ -172,8 +159,8 @@ class VideoService {
         Asset.findById(video.voiceId)
       ]);
 
-      if (!avatar || !voice) {
-        throw new Error('Avatar or voice asset not found');
+      if (!avatar) {
+        throw new Error('Avatar asset not found');
       }
 
       // Get the populated lesson to access the script
@@ -183,8 +170,8 @@ class VideoService {
       this.processVideoGeneration(
         videoId, 
         lesson.script, 
-        avatar.fileUrl, 
-        voice.fileUrl
+        avatar.fileUrl,
+        video.voiceId?.toString()
       );
 
       return video;
@@ -192,6 +179,23 @@ class VideoService {
       console.error('Video Regeneration Error:', error);
       throw error;
     }
+  }
+
+  /**
+   * Get available TTS voices
+   */
+  getAvailableVoices() {
+    return ttsService.getAvailableVoices();
+  }
+
+  /**
+   * Clean up temporary files
+   */
+  async cleanup() {
+    await Promise.all([
+      ttsService.cleanup(),
+      avatarVideoService.cleanup()
+    ]);
   }
 }
 

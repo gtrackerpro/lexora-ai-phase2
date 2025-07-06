@@ -3,7 +3,9 @@ import {
   getVideosByLesson,
   getVideo,
   updateVideoStatus,
-  deleteVideo
+  deleteVideo,
+  getAvailableVoices,
+  cleanupTempFiles
 } from '../controllers/videoController';
 import { protect } from '../middleware/auth';
 
@@ -11,6 +13,8 @@ const router = express.Router();
 
 router.use(protect); // All routes are protected
 
+router.get('/voices', getAvailableVoices);
+router.post('/cleanup', cleanupTempFiles);
 router.get('/lesson/:lessonId', getVideosByLesson);
 router.get('/:id', getVideo);
 router.put('/:id/status', updateVideoStatus);

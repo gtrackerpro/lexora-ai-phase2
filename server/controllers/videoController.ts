@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import Video from '../models/Video';
 import Lesson from '../models/Lesson';
+import videoService from '../services/videoService';
 
 // @desc    Get videos for a lesson
 // @route   GET /api/lessons/:lessonId/videos
@@ -152,6 +153,46 @@ export const deleteVideo = async (req: Request, res: Response) => {
     res.status(500).json({
       success: false,
       message: 'Failed to delete video'
+    });
+  }
+};
+
+// @desc    Get available TTS voices
+// @route   GET /api/videos/voices
+// @access  Private
+export const getAvailableVoices = async (req: Request, res: Response) => {
+  try {
+    const voices = videoService.getAvailableVoices();
+    
+    res.status(200).json({
+      success: true,
+      voices
+    });
+  } catch (error) {
+    console.error('Get Voices Error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch available voices'
+    });
+  }
+};
+
+// @desc    Clean up temporary files
+// @route   POST /api/videos/cleanup
+// @access  Private
+export const cleanupTempFiles = async (req: Request, res: Response) => {
+  try {
+    await videoService.cleanup();
+    
+    res.status(200).json({
+      success: true,
+      message: 'Temporary files cleaned up successfully'
+    });
+  } catch (error) {
+    console.error('Cleanup Error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to clean up temporary files'
     });
   }
 };
