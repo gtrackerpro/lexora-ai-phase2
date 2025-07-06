@@ -43,9 +43,15 @@ export const createTopic = async (req: Request, res: Response) => {
       // Generate lessons for the learning path
       try {
         console.log('Starting lesson generation for learning path:', learningPath._id);
+        
+        // Ensure user exists
+        if (!req.user?._id) {
+          throw new Error('User ID is required for lesson generation');
+        }
+        
         const lessons = await lessonGenerationService.generateAllLessons(
-          learningPath._id.toString(),
-          req.user?._id
+          (learningPath._id as any).toString(),
+          req.user._id
         );
         console.log(`Generated ${lessons.length} lessons for learning path`);
         
@@ -72,7 +78,6 @@ export const createTopic = async (req: Request, res: Response) => {
       res.status(201).json({
         success: true,
         topic,
-        learningPath,
         message: 'Topic created successfully. AI content generation will be retried.'
       });
     }
