@@ -2,7 +2,11 @@ import axios from 'axios';
 import fs from 'fs';
 import path from 'path';
 import { promisify } from 'util';
+import { Readable } from 'stream';
 import awsService from './awsService';
+
+// Import gTTS for local text-to-speech
+const gTTS = require('gtts');
 
 const writeFile = promisify(fs.writeFile);
 const unlink = promisify(fs.unlink);
@@ -105,59 +109,62 @@ class TTSService {
   }
 
   /**
-   * Generate speech using gTTS (fallback method)
+   * Generate speech using gTTS (local method)
    */
   private async generateWithGTTS(text: string, language: string): Promise<TTSResult> {
-    try {
-      // For demo purposes, we'll simulate gTTS
-      // In production, you would use the actual gTTS library or API
-      
-      const tempFileName = `tts_${Date.now()}_${Math.random().toString(36).substr(2, 9)}.mp3`;
-      const tempFilePath = path.join(this.tempDir, tempFileName);
+    return new Promise((resolve, reject) => {
+      try {
+        console.log('Generating TTS with gTTS for text:', text.substring(0, 50) + '...');
+        
+        // Parse language code for gTTS (it expects just the language part)
+        const gTTSLanguage = language.split('-')[0]; // 'en-US' -> 'en'
+        
+        const tempFileName = `tts_${Date.now()}_${Math.random().toString(36).substr(2, 9)}.mp3`;
+        const tempFilePath = path.join(this.tempDir, tempFileName);
 
-      // Simulate TTS generation with a mock audio file
-      const mockAudioData = this.generateMockAudio(text);
-      await writeFile(tempFilePath, mockAudioData);
+        // Create gTTS instance
+        const gtts = new gTTS(text, gTTSLanguage);
+        
+        // Save to temporary file
+        gtts.save(tempFilePath, (err: any) => {
+          if (err) {
+            console.error('gTTS Save Error:', err);
+            reject(new Error(`gTTS generation failed: ${err.message}`));
+            return;
+          }
 
-      // Read the generated file
-      const audioBuffer = fs.readFileSync(tempFilePath);
-      
-      // Clean up temp file
-      await unlink(tempFilePath);
+          try {
+            // Read the generated file
+            const audioBuffer = fs.readFileSync(tempFilePath);
+            
+            // Clean up temp file
+            fs.unlink(tempFilePath, (unlinkErr) => {
+              if (unlinkErr) {
+                console.warn('Failed to clean up temp file:', unlinkErr);
+              }
+            });
 
-      // Estimate duration
-      const wordCount = text.split(' ').length;
-      const estimatedDuration = Math.ceil((wordCount / 150) * 60);
+            // Estimate duration based on text length
+            const wordCount = text.split(' ').length;
+            const estimatedDuration = Math.ceil((wordCount / 150) * 60); // ~150 words per minute
 
-      return {
-        audioBuffer,
-        duration: estimatedDuration,
-        format: 'mp3'
-      };
-    } catch (error) {
-      console.error('gTTS Error:', error);
-      throw error;
-    }
-  }
+            console.log(`gTTS generation completed. Audio size: ${audioBuffer.length} bytes, Duration: ${estimatedDuration}s`);
 
-  /**
-   * Generate mock audio data for demo purposes
-   */
-  private generateMockAudio(text: string): Buffer {
-    // Create a simple mock MP3-like buffer
-    // In production, this would be replaced with actual TTS generation
-    const baseSize = 1024 * 50; // 50KB base
-    const textLength = text.length;
-    const audioSize = baseSize + (textLength * 100); // Scale with text length
-    
-    const buffer = Buffer.alloc(audioSize);
-    
-    // Fill with mock audio data pattern
-    for (let i = 0; i < audioSize; i++) {
-      buffer[i] = Math.floor(Math.sin(i / 100) * 127 + 128);
-    }
-    
-    return buffer;
+            resolve({
+              audioBuffer,
+              duration: estimatedDuration,
+              format: 'mp3'
+            });
+          } catch (readError) {
+            console.error('Error reading generated audio file:', readError);
+            reject(new Error('Failed to read generated audio file'));
+          }
+        });
+      } catch (error) {
+        console.error('gTTS Error:', error);
+        reject(new Error(`gTTS initialization failed: ${error}`));
+      }
+    });
   }
 
   /**
@@ -193,14 +200,19 @@ class TTSService {
    */
   getAvailableVoices(): Array<{ id: string; name: string; language: string; gender: string }> {
     return [
-      { id: 'en-US-Standard-A', name: 'US English (Female)', language: 'en-US', gender: 'female' },
-      { id: 'en-US-Standard-B', name: 'US English (Male)', language: 'en-US', gender: 'male' },
-      { id: 'en-US-Standard-C', name: 'US English (Female)', language: 'en-US', gender: 'female' },
-      { id: 'en-US-Standard-D', name: 'US English (Male)', language: 'en-US', gender: 'male' },
-      { id: 'en-US-Wavenet-A', name: 'US English Wavenet (Female)', language: 'en-US', gender: 'female' },
-      { id: 'en-US-Wavenet-B', name: 'US English Wavenet (Male)', language: 'en-US', gender: 'male' },
-      { id: 'en-GB-Standard-A', name: 'UK English (Female)', language: 'en-GB', gender: 'female' },
-      { id: 'en-GB-Standard-B', name: 'UK English (Male)', language: 'en-GB', gender: 'male' },
+      // gTTS supported languages (simplified list)
+      { id: 'en', name: 'English', language: 'en', gender: 'neutral' },
+      { id: 'es', name: 'Spanish', language: 'es', gender: 'neutral' },
+      { id: 'fr', name: 'French', language: 'fr', gender: 'neutral' },
+      { id: 'de', name: 'German', language: 'de', gender: 'neutral' },
+      { id: 'it', name: 'Italian', language: 'it', gender: 'neutral' },
+      { id: 'pt', name: 'Portuguese', language: 'pt', gender: 'neutral' },
+      { id: 'ru', name: 'Russian', language: 'ru', gender: 'neutral' },
+      { id: 'ja', name: 'Japanese', language: 'ja', gender: 'neutral' },
+      { id: 'ko', name: 'Korean', language: 'ko', gender: 'neutral' },
+      { id: 'zh', name: 'Chinese', language: 'zh', gender: 'neutral' },
+      { id: 'hi', name: 'Hindi', language: 'hi', gender: 'neutral' },
+      { id: 'ar', name: 'Arabic', language: 'ar', gender: 'neutral' },
     ];
   }
 
@@ -210,14 +222,42 @@ class TTSService {
   async cleanup(): Promise<void> {
     try {
       const files = fs.readdirSync(this.tempDir);
-      const deletePromises = files.map(file => {
+      const audioFiles = files.filter(file => 
+        file.endsWith('.mp3') || 
+        file.endsWith('.wav') || 
+        file.startsWith('tts_')
+      );
+      
+      const deletePromises = audioFiles.map(file => {
         const filePath = path.join(this.tempDir, file);
         return unlink(filePath).catch(() => {}); // Ignore errors
       });
       
       await Promise.all(deletePromises);
+      console.log(`Cleaned up ${audioFiles.length} temporary audio files`);
     } catch (error) {
-      console.error('Cleanup Error:', error);
+      console.error('TTS Cleanup Error:', error);
+    }
+  }
+
+  /**
+   * Test TTS functionality
+   */
+  async testTTS(): Promise<boolean> {
+    try {
+      const testText = "Hello, this is a test of the text-to-speech system.";
+      const result = await this.generateSpeech({ text: testText, language: 'en' });
+      
+      console.log('TTS Test successful:', {
+        audioSize: result.audioBuffer.length,
+        duration: result.duration,
+        format: result.format
+      });
+      
+      return true;
+    } catch (error) {
+      console.error('TTS Test failed:', error);
+      return false;
     }
   }
 }
