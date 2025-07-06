@@ -162,7 +162,9 @@ export const deleteVideo = async (req: Request, res: Response) => {
 // @access  Private
 export const getAvailableVoices = async (req: Request, res: Response) => {
   try {
-    const voices = videoService.getAvailableVoices();
+    const voices = await import('../services/ttsService').then(module => 
+      module.default.getAvailableVoices()
+    );
     
     res.status(200).json({
       success: true,
