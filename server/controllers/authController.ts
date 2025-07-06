@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import jwt, { Secret } from 'jsonwebtoken';
+import { HydratedDocument } from 'mongoose';
 import User, { IUser } from '../models/User';
 import passport from '../config/passport';
 
@@ -86,7 +87,7 @@ export const login = async (req: Request, res: Response) => {
     }
 
     // Check for user
-    const user = await User.findOne({ email }).select('+password') as IUser;
+    const user = await User.findOne({ email }).select('+password') as HydratedDocument<IUser>;
     if (!user) {
       return res.status(401).json({
         success: false,
@@ -114,7 +115,7 @@ export const login = async (req: Request, res: Response) => {
       success: true,
       token,
       user: {
-        id: user._id,
+        id: user._id.toString(),
         email: user.email,
         displayName: user.displayName,
         preferences: user.preferences
@@ -139,7 +140,7 @@ export const googleAuth = passport.authenticate('google', {
 // @route   GET /api/auth/google/callback
 // @access  Public
 export const googleCallback = (req: Request, res: Response) => {
-  passport.authenticate('google', { session: false }, (err: any, user: IUser) => {
+  passport.authenticate('google', { session: false }, (err: any, user: HydratedDocument<IUser>) => {
     if (err) {
       console.error('Google OAuth callback error:', err);
       return res.redirect(`${process.env.CLIENT_URL}/login?error=oauth_error`);
@@ -154,7 +155,7 @@ export const googleCallback = (req: Request, res: Response) => {
 
     // Redirect to frontend with token
     res.redirect(`${process.env.CLIENT_URL}/auth/callback?token=${token}&user=${encodeURIComponent(JSON.stringify({
-      id: (user as IUser)._id.toString(),
+      id: user._id.toString(),
       email: user.email,
       displayName: user.displayName,
       avatar: user.avatar,
