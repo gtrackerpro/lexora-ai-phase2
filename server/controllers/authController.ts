@@ -56,7 +56,7 @@ export const register = async (req: Request, res: Response) => {
       success: true,
       token,
       user: {
-        id: user._id,
+        id: user._id.toString(),
         email: user.email,
         displayName: user.displayName,
         preferences: user.preferences
@@ -154,7 +154,7 @@ export const googleCallback = (req: Request, res: Response) => {
 
     // Redirect to frontend with token
     res.redirect(`${process.env.CLIENT_URL}/auth/callback?token=${token}&user=${encodeURIComponent(JSON.stringify({
-      id: user._id.toString(),
+      id: (user as IUser)._id.toString(),
       email: user.email,
       displayName: user.displayName,
       avatar: user.avatar,
