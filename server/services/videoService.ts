@@ -1,5 +1,6 @@
-import Video from '../models/Video';
+import Video, { IVideo } from '../models/Video';
 import Asset from '../models/Asset';
+import Lesson, { ILesson } from '../models/Lesson';
 import awsService from './awsService';
 import mongoose from 'mongoose';
 import { spawn } from 'child_process';
@@ -46,7 +47,7 @@ class VideoService {
       });
 
       // Start async video generation process
-      this.processVideoGeneration(video._id.toString(), script, avatar.fileUrl, voice.fileUrl);
+      this.processVideoGeneration((video._id as mongoose.Types.ObjectId).toString(), script, avatar.fileUrl, voice.fileUrl);
 
       return video;
     } catch (error) {
@@ -175,10 +176,13 @@ class VideoService {
         throw new Error('Avatar or voice asset not found');
       }
 
+      // Get the populated lesson to access the script
+      const lesson = video.lessonId as unknown as ILesson;
+      
       // Start regeneration process
       this.processVideoGeneration(
         videoId, 
-        video.lessonId.script, 
+        lesson.script, 
         avatar.fileUrl, 
         voice.fileUrl
       );

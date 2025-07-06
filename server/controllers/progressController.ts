@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import Progress from '../models/Progress';
 import Lesson from '../models/Lesson';
 import Video from '../models/Video';
+import { ITopic } from '../models/Topic';
 
 // @desc    Create or update progress
 // @route   POST /api/progress
@@ -254,9 +255,10 @@ export const getLearningAnalytics = async (req: Request, res: Response) => {
     }
 
     // Topic progress
-    const topicStats = {};
+    const topicStats: { [key: string]: { total: number; completed: number } } = {};
     allProgress.forEach(p => {
-      const topicTitle = p.topicId?.title || 'Unknown';
+      const topic = p.topicId as unknown as ITopic;
+      const topicTitle = topic?.title || 'Unknown';
       if (!topicStats[topicTitle]) {
         topicStats[topicTitle] = { total: 0, completed: 0 };
       }

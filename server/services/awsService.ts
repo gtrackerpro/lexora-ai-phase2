@@ -22,7 +22,7 @@ class AWSService {
   createUploadMiddleware(folder: string = 'uploads') {
     return multer({
       storage: multerS3({
-        s3: s3,
+        s3: s3 as any,
         bucket: this.bucketName,
         metadata: (req, file, cb) => {
           cb(null, { fieldName: file.fieldname });
