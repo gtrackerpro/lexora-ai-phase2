@@ -129,7 +129,7 @@ const Sidebar: React.FC = () => {
             </div>
             <p className="text-xs text-primary-400 mt-2">Keep it up! 🔥</p>
           </div>
-        </motion.div>
+        </div>
 
         {/* Bottom Navigation */}
         <div className="border-t border-dark-800 pt-4">

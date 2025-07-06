@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useTopics, useProgressAnalytics } from '../hooks';
+// import { useTopics, useProgressAnalytics } from '../hooks';
 import {
   BookOpen,
   Clock,
@@ -18,7 +18,7 @@ import {
 import StatsCard from '../components/Dashboard/StatsCard';
 import TopicCard from '../components/Dashboard/TopicCard';
 import RecentActivity from '../components/Dashboard/RecentActivity';
-import EnhancedLearningStreak from '../components/Dashboard/EnhancedLearningStreak';
+// import EnhancedLearningStreak from '../components/Dashboard/EnhancedLearningStreak';
 import Grid from '../components/Common/Grid';
 import LoadingCard, { LoadingGrid } from '../components/Common/LoadingCard';
 import ErrorState from '../components/Common/ErrorState';
@@ -28,8 +28,55 @@ const Dashboard: React.FC = () => {
   const navigate = useNavigate();
 
   // Fetch real data using custom hooks
-  const { data: topics, isLoading: topicsLoading, error: topicsError, refetch: refetchTopics } = useTopics();
-  const { data: analytics, isLoading: analyticsLoading, error: analyticsError } = useProgressAnalytics();
+  // Temporarily use mock data until API endpoints are implemented
+  const topicsLoading = false;
+  const topicsError = null;
+  const analyticsLoading = false;
+  const analyticsError = null;
+  
+  // Mock data for demonstration
+  const topics = [
+    {
+      _id: '1',
+      title: 'Python Programming Masterclass',
+      description: 'Learn Python from scratch to advanced concepts with hands-on projects and real-world applications.',
+      tags: ['python', 'programming', 'beginner'],
+      createdBy: 'user123',
+      createdAt: '2023-01-01'
+    },
+    {
+      _id: '2',
+      title: 'Web Development Fundamentals',
+      description: 'Master HTML, CSS, and JavaScript to build modern, responsive websites from the ground up.',
+      tags: ['web', 'html', 'css', 'javascript'],
+      createdBy: 'user123',
+      createdAt: '2023-01-02'
+    },
+    {
+      _id: '3',
+      title: 'Data Science with Python',
+      description: 'Dive into data analysis, visualization, and machine learning using Python and popular libraries.',
+      tags: ['data science', 'python', 'machine learning'],
+      createdBy: 'user123',
+      createdAt: '2023-01-03'
+    },
+    {
+      _id: '4',
+      title: 'Machine Learning Fundamentals',
+      description: 'Understand the core concepts of machine learning and build your first AI models.',
+      tags: ['machine learning', 'ai', 'python'],
+      createdBy: 'user123',
+      createdAt: '2023-01-04'
+    }
+  ];
+  
+  // Mock analytics data
+  const statsData = {
+    totalHours: 127.5,
+    completedLessons: 89,
+    currentStreak: 15,
+    achievements: 24
+  };
 
   const handleCreateNewTopic = () => {
     navigate('/create-topic');
@@ -39,13 +86,10 @@ const Dashboard: React.FC = () => {
     navigate(`/learning/${topicId}`);
   };
 
-  // Calculate stats from real data
-  const statsData = analytics ? {
-    totalHours: analytics.totalHours,
-    completedLessons: analytics.completedLessons,
-    currentStreak: analytics.currentStreak,
-    achievements: Math.floor(analytics.completedLessons / 5) // 1 achievement per 5 lessons
-  } : null;
+  const refetchTopics = () => {
+    // This would normally trigger a data refetch
+    console.log('Refetching topics...');
+  };
 
   return (
     <Layout>
@@ -206,7 +250,29 @@ const Dashboard: React.FC = () => {
           <RecentActivity />
           
           {/* Learning Streak */}
-          <EnhancedLearningStreak />
+          {/* Temporarily using a simpler component until API is ready */}
+          <div className="glass-card">
+            <div className="flex items-center space-x-2 mb-6">
+              <Zap className="h-5 w-5 text-primary-400" />
+              <h3 className="text-lg font-semibold text-white">Learning Streak</h3>
+            </div>
+            <div className="text-center mb-4">
+              <div className="text-4xl font-bold text-primary-400 mb-2">15</div>
+              <p className="text-dark-300">days in a row</p>
+            </div>
+            <div className="flex justify-center space-x-1 mb-4">
+              {[...Array(7)].map((_, i) => (
+                <div
+                  key={i}
+                  className={`w-3 h-3 rounded-full ${
+                    i < 5 ? 'bg-primary-500' : 'bg-dark-700'
+                  }`}
+                />
+              ))}
+            </div>
+            <p className="text-center text-primary-400 text-sm">Keep it up! 🔥</p>
+          </div>
+          
           <div className="glass-card">
             <div className="flex items-center space-x-2 mb-6">
               <Target className="h-5 w-5 text-primary-400" />
