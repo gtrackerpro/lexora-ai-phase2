@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { User } from '../types';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
@@ -36,7 +37,7 @@ api.interceptors.response.use(
 export interface AuthResponse {
   success: boolean;
   token: string;
-  user: any;
+  user: User;
 }
 
 export interface ApiResponse<T = any> {
