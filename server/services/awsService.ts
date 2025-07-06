@@ -1,15 +1,17 @@
-import AWS from 'aws-sdk';
+import { S3Client, PutObjectCommand, DeleteObjectCommand, ListObjectsV2Command } from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import { GetObjectCommand } from '@aws-sdk/client-s3';
 import multer from 'multer';
 import multerS3 from 'multer-s3';
 
-// Configure AWS
-AWS.config.update({
-  accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-  secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-  region: process.env.AWS_REGION || 'ap-south-1'
+// Configure AWS SDK v3
+const s3Client = new S3Client({
+  region: process.env.AWS_REGION || 'ap-south-1',
+  credentials: {
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!
+  }
 });
-
-const s3 = new AWS.S3();
 
 class AWSService {
   private bucketName: string;
@@ -22,7 +24,7 @@ class AWSService {
   createUploadMiddleware(folder: string = 'uploads') {
     return multer({
       storage: multerS3({
-        s3: s3 as any,
+        s3: s3Client as any,
         bucket: this.bucketName,
         metadata: (req, file, cb) => {
           cb(null, { fieldName: file.fieldname });
@@ -62,16 +64,16 @@ class AWSService {
   // Upload file directly to S3
   async uploadFile(file: Buffer, fileName: string, mimeType: string, folder: string = 'uploads'): Promise<string> {
     try {
-      const params = {
+      const command = new PutObjectCommand({
         Bucket: this.bucketName,
         Key: `${folder}/${fileName}`,
         Body: file,
         ContentType: mimeType,
         ACL: 'public-read'
-      };
+      });
 
-      const result = await s3.upload(params).promise();
-      return result.Location;
+      await s3Client.send(command);
+      return `https://${this.bucketName}.s3.${process.env.AWS_REGION || 'ap-south-1'}.amazonaws.com/${folder}/${fileName}`;
     } catch (error) {
       console.error('S3 Upload Error:', error);
       throw new Error('Failed to upload file to S3');
@@ -81,12 +83,12 @@ class AWSService {
   // Delete file from S3
   async deleteFile(fileKey: string): Promise<void> {
     try {
-      const params = {
+      const command = new DeleteObjectCommand({
         Bucket: this.bucketName,
         Key: fileKey
-      };
+      });
 
-      await s3.deleteObject(params).promise();
+      await s3Client.send(command);
     } catch (error) {
       console.error('S3 Delete Error:', error);
       throw new Error('Failed to delete file from S3');
@@ -94,25 +96,24 @@ class AWSService {
   }
 
   // Get signed URL for private files
-  getSignedUrl(fileKey: string, expiresIn: number = 3600): string {
-    const params = {
+  async getSignedUrl(fileKey: string, expiresIn: number = 3600): Promise<string> {
+    const command = new GetObjectCommand({
       Bucket: this.bucketName,
-      Key: fileKey,
-      Expires: expiresIn
-    };
+      Key: fileKey
+    });
 
-    return s3.getSignedUrl('getObject', params);
+    return await getSignedUrl(s3Client, command, { expiresIn });
   }
 
   // List files in a folder
-  async listFiles(folder: string): Promise<AWS.S3.Object[]> {
+  async listFiles(folder: string): Promise<any[]> {
     try {
-      const params = {
+      const command = new ListObjectsV2Command({
         Bucket: this.bucketName,
         Prefix: folder + '/'
-      };
+      });
 
-      const result = await s3.listObjectsV2(params).promise();
+      const result = await s3Client.send(command);
       return result.Contents || [];
     } catch (error) {
       console.error('S3 List Error:', error);
