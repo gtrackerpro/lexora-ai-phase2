@@ -76,7 +76,6 @@ const Dashboard: React.FC = () => {
                   <Plus className="h-5 w-5 mr-2" />
                   <span>New Learning Path</span>
                 </button>
-                <img 
                 <button className="btn-secondary px-4 py-2">
                   <Brain className="h-5 w-5 mr-2" />
                   <span>AI Recommendations</span>
@@ -208,8 +207,7 @@ const Dashboard: React.FC = () => {
           
           {/* Learning Streak */}
           <EnhancedLearningStreak />
-            className="glass-card"
-          >
+          <div className="glass-card">
             <div className="flex items-center space-x-2 mb-6">
               <Target className="h-5 w-5 text-primary-400" />
               <h3 className="text-lg font-semibold text-white">Quick Actions</h3>
@@ -255,29 +253,26 @@ const Dashboard: React.FC = () => {
               </button>
             </div>
           </div>
-            <div className="space-y-3">
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-dark-300">Global Learners</span>
-                <span className="text-sm font-semibold text-accent-400">2.4M+</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-dark-300">Lessons Completed Today</span>
-                <span className="text-sm font-semibold text-success-400">156K</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-dark-300">Your Rank</span>
-                <span className="text-sm font-semibold text-primary-400">#1,247</span>
-              </div>
+          <div className="space-y-3">
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-dark-300">Global Learners</span>
+              <span className="text-sm font-semibold text-accent-400">2.4M+</span>
             </div>
-            <button
-              className="w-full mt-4 btn-ghost py-2 text-sm"
-            >
-              <div className="flex items-center justify-center space-x-2">
-                <Globe className="h-4 w-4" />
-                <span>Join Community</span>
-              </div>
-            </button>
-          </motion.div>
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-dark-300">Lessons Completed Today</span>
+              <span className="text-sm font-semibold text-success-400">156K</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-dark-300">Your Rank</span>
+              <span className="text-sm font-semibold text-primary-400">#1,247</span>
+            </div>
+          </div>
+          <button className="w-full mt-4 btn-ghost py-2 text-sm">
+            <div className="flex items-center justify-center space-x-2">
+              <Globe className="h-4 w-4" />
+              <span>Join Community</span>
+            </div>
+          </button>
         </div>
       </Grid>
       </div>
