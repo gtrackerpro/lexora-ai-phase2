@@ -388,7 +388,11 @@ const CreateTopic: React.FC = () => {
           {/* AI Features */}
           <div className="card">
             <div className="flex items-center space-x-2 mb-4">
-              <Zap className="h-5 w-5 text-primary-400" />
+              <img 
+                src="/lexora-logo.png" 
+                alt="Lexora" 
+                className="h-5 w-5 object-contain"
+              />
               <h3 className="text-lg font-semibold text-white">AI-Powered Learning</h3>
             </div>
             <div className="space-y-3">
@@ -443,7 +447,11 @@ const CreateTopic: React.FC = () => {
               className="card bg-gradient-to-br from-primary-600 to-primary-700"
             >
               <div className="text-center">
-                <Sparkles className="h-8 w-8 text-white mx-auto mb-3 animate-pulse" />
+                <img 
+                  src="/lexora-logo.png" 
+                  alt="Lexora" 
+                  className="h-8 w-8 object-contain mx-auto mb-3 animate-pulse"
+                />
                 <h3 className="text-white font-semibold mb-2">Creating Your Path</h3>
                 <p className="text-primary-100 text-sm">
                   Our AI is analyzing your preferences and generating a personalized learning curriculum...

@@ -102,7 +102,11 @@ const Dashboard: React.FC = () => {
                 transition={{ delay: 0.1 }}
                 className="flex items-center space-x-2"
               >
-                <Sparkles className="h-6 w-6 text-primary-400" />
+                <img 
+                  src="/lexora-logo.png" 
+                  alt="Lexora" 
+                  className="h-6 w-6 object-contain"
+                />
                 <span className="text-primary-400 font-medium">Welcome back!</span>
               </motion.div>
               <motion.h1

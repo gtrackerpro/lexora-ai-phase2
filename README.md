@@ -1,7 +1,7 @@
 # Lexora - AI-Powered Learning Platform
 
 <div align="center">
-  <img src="client/public/lexora-logo.png" alt="Lexora Logo" width="120" height="120">
+  <img src="https://github.com/warpagenticai/lexora-ai/blob/main/client/public/lexora-logo.png?raw=true" alt="Lexora Logo" width="120" height="120">
   
   **Guided by AI. Powered by You.**
   

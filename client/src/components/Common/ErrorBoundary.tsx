@@ -79,9 +79,13 @@ class ErrorBoundary extends Component<Props, State> {
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
-              className="inline-flex items-center justify-center w-20 h-20 bg-error-500/20 rounded-full mb-6"
+              className="inline-flex items-center justify-center w-20 h-20 bg-white rounded-full mb-6 shadow-lg"
             >
-              <AlertTriangle className="w-10 h-10 text-error-400" />
+              <img 
+                src="/lexora-logo.png" 
+                alt="Lexora Logo" 
+                className="w-12 h-12 object-contain opacity-50"
+              />
             </motion.div>
 
             <motion.h1

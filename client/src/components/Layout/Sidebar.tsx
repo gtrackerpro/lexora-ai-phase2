@@ -137,6 +137,14 @@ const Sidebar: React.FC = () => {
         >
           <div className="absolute inset-0 bg-gradient-to-br from-primary-600/20 to-accent-600/20"></div>
           <div className="relative p-6 text-center">
+            <div className="flex items-center justify-center mb-4">
+              <img 
+                src="/lexora-logo.png" 
+                alt="Lexora" 
+                className="h-8 w-8 object-contain mr-2"
+              />
+              <span className="text-lg font-bold text-gradient">Lexora</span>
+            </div>
             <div className="flex items-center justify-center space-x-2 mb-3">
               <Zap className="w-6 h-6 text-yellow-400 animate-bounce-subtle" />
               <h3 className="text-lg font-bold text-white">Learning Streak</h3>

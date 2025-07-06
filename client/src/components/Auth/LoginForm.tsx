@@ -66,8 +66,12 @@ const LoginForm: React.FC = () => {
               className="relative"
             >
               <div className="absolute inset-0 bg-gradient-to-r from-primary-500 to-accent-500 rounded-2xl blur opacity-75"></div>
-              <div className="relative bg-gradient-to-r from-primary-600 to-accent-600 p-4 rounded-2xl">
-                <BookOpen className="h-8 w-8 text-white" />
+              <div className="relative bg-white p-4 rounded-2xl shadow-lg">
+                <img 
+                  src="/lexora-logo.png" 
+                  alt="Lexora Logo" 
+                  className="h-8 w-8 object-contain"
+                />
               </div>
             </motion.div>
             <div>

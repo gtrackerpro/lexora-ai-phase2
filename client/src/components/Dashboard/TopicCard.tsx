@@ -63,7 +63,11 @@ const TopicCard: React.FC<TopicCardProps> = ({
           ) : (
             <div className="flex items-center justify-center h-full relative">
               <div className="absolute inset-0 bg-gradient-to-br from-primary-600/30 to-accent-600/30"></div>
-              <BookOpen className="h-16 w-16 text-white/60 relative z-10" />
+              <img 
+                src="/lexora-logo.png" 
+                alt="Lexora" 
+                className="h-16 w-16 object-contain opacity-60 relative z-10"
+              />
               <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
             </div>
           )}

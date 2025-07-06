@@ -41,8 +41,12 @@ const Header: React.FC = () => {
               className="relative"
             >
               <div className="absolute inset-0 bg-gradient-to-r from-primary-500 to-accent-500 rounded-xl blur opacity-75 group-hover:opacity-100 transition-opacity"></div>
-              <div className="relative bg-gradient-to-r from-primary-600 to-accent-600 p-2.5 rounded-xl">
-                <BookOpen className="h-6 w-6 text-white" />
+              <div className="relative p-1 rounded-xl">
+                <img 
+                  src="/lexora-logo.png" 
+                  alt="Lexora Logo" 
+                  className="h-8 w-8 object-contain"
+                />
               </div>
             </motion.div>
             <span className="text-xl font-bold text-gradient hidden sm:block">
