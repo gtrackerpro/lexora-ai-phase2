@@ -1,6 +1,7 @@
 import Video from '../models/Video';
 import Asset from '../models/Asset';
 import awsService from './awsService';
+import mongoose from 'mongoose';
 import { spawn } from 'child_process';
 import fs from 'fs';
 import path from 'path';
@@ -11,7 +12,7 @@ const unlink = promisify(fs.unlink);
 
 interface GenerateVideoParams {
   lessonId: string;
-  userId: string;
+  userId: mongoose.Types.ObjectId;
   script: string;
   avatarId: string;
   voiceId: string;
