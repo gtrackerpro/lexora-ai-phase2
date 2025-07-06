@@ -7,13 +7,18 @@ import {
   BookOpen,
   MessageSquare,
   Clock,
-  Target
+  Target,
+  Play,
+  Loader2,
+  Video as VideoIcon,
+  AlertCircle
 } from 'lucide-react';
 import VideoPlayer from '../components/LessonViewer/VideoPlayer';
 import LoadingSpinner from '../components/Common/LoadingSpinner';
-import { lessonsAPI, progressAPI, videosAPI } from '../services/api';
+import { lessonsAPI, progressAPI, videosAPI, authAPI } from '../services/api';
 import { useAnalytics } from '../utils/analytics';
 import toast from 'react-hot-toast';
+import Layout from '../components/Layout/Layout';
 
 interface Lesson {
   _id: string;
@@ -52,6 +57,23 @@ const LessonViewer: React.FC = () => {
   const [notes, setNotes] = useState('');
   const [activeTab, setActiveTab] = useState<'overview' | 'transcript' | 'notes'>('overview');
   const [watchTime, setWatchTime] = useState(0);
+  const [generatingVideo, setGeneratingVideo] = useState(false);
+  const [user, setUser] = useState<any>(null);
+
+  // Get user data for avatar/voice preferences
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const response = await authAPI.getMe();
+        if (response.success) {
+          setUser(response.user);
+        }
+      } catch (error) {
+        console.error('Failed to fetch user:', error);
+      }
+    };
+    fetchUser();
+  }, []);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -144,6 +166,61 @@ const LessonViewer: React.FC = () => {
     }
   };
 
+  const handleGenerateVideo = async () => {
+    if (!lesson || !user) return;
+
+    // Check if user has avatar and voice preferences
+    if (!user.avatarId || !user.voiceId) {
+      toast.error('Please set your avatar and voice preferences in Profile Settings first');
+      return;
+    }
+
+    setGeneratingVideo(true);
+    try {
+      const response = await lessonsAPI.generateVideo(lesson._id, {
+        avatarId: user.avatarId,
+        voiceId: user.voiceId
+      });
+
+      if (response.success) {
+        toast.success('Video generation started! This may take a few minutes.');
+        setVideo(response.video);
+        
+        // Poll for video status updates
+        const pollInterval = setInterval(async () => {
+          try {
+            const statusResponse = await videosAPI.getById(response.video._id);
+            if (statusResponse.success) {
+              setVideo(statusResponse.video);
+              
+              if (statusResponse.video.status === 'completed') {
+                clearInterval(pollInterval);
+                toast.success('Video generation completed!');
+                setGeneratingVideo(false);
+              } else if (statusResponse.video.status === 'failed') {
+                clearInterval(pollInterval);
+                toast.error('Video generation failed. Please try again.');
+                setGeneratingVideo(false);
+              }
+            }
+          } catch (error) {
+            console.error('Error polling video status:', error);
+          }
+        }, 5000); // Poll every 5 seconds
+
+        // Clear interval after 10 minutes to prevent infinite polling
+        setTimeout(() => {
+          clearInterval(pollInterval);
+          setGeneratingVideo(false);
+        }, 600000);
+      }
+    } catch (error) {
+      console.error('Video generation error:', error);
+      toast.error('Failed to start video generation');
+      setGeneratingVideo(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
@@ -167,7 +244,8 @@ const LessonViewer: React.FC = () => {
   }
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6">
+    <Layout>
+      <div className="max-w-7xl mx-auto space-y-6">
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -213,13 +291,77 @@ const LessonViewer: React.FC = () => {
                 onComplete={handleVideoComplete}
                 startTime={progress?.watchedPercentage ? (progress.watchedPercentage / 100) * video.durationSec : 0}
               />
+            ) : video && video.status === 'generating' ? (
+              <div className="aspect-video bg-dark-800 flex items-center justify-center">
+                <div className="text-center">
+                  <LoadingSpinner 
+                    size="lg" 
+                    type="video"
+                    text="Generating your personalized video..."
+                  />
+                  <p className="text-dark-400 text-sm mt-4">
+                    This may take a few minutes. You can continue with other lessons.
+                  </p>
+                </div>
+              </div>
+            ) : video && video.status === 'failed' ? (
+              <div className="aspect-video bg-dark-800 flex items-center justify-center">
+                <div className="text-center">
+                  <AlertCircle className="h-12 w-12 text-error-400 mx-auto mb-4" />
+                  <p className="text-white text-lg mb-2">Video Generation Failed</p>
+                  <p className="text-dark-400 text-sm mb-6">
+                    There was an error generating your video. Please try again.
+                  </p>
+                  <button
+                    onClick={handleGenerateVideo}
+                    disabled={generatingVideo}
+                    className="btn-primary px-6 py-3 flex items-center space-x-2 mx-auto"
+                  >
+                    {generatingVideo ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        <span>Generating...</span>
+                      </>
+                    ) : (
+                      <>
+                        <VideoIcon className="h-4 w-4" />
+                        <span>Retry Video Generation</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
             ) : (
               <div className="aspect-video bg-dark-800 flex items-center justify-center">
-                <LoadingSpinner 
-                  size="lg" 
-                  type={video?.status === 'generating' ? 'video' : 'default'}
-                  text={video?.status === 'generating' ? 'Generating video...' : 'Video not available'}
-                />
+                <div className="text-center">
+                  <VideoIcon className="h-16 w-16 text-dark-600 mx-auto mb-4" />
+                  <p className="text-white text-lg mb-2">No Video Available</p>
+                  <p className="text-dark-400 text-sm mb-6">
+                    Generate a personalized video with your avatar and voice
+                  </p>
+                  <button
+                    onClick={handleGenerateVideo}
+                    disabled={generatingVideo || !user?.avatarId || !user?.voiceId}
+                    className="btn-primary px-6 py-3 flex items-center space-x-2 mx-auto"
+                  >
+                    {generatingVideo ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        <span>Generating...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Play className="h-4 w-4" />
+                        <span>Generate Video</span>
+                      </>
+                    )}
+                  </button>
+                  {(!user?.avatarId || !user?.voiceId) && (
+                    <p className="text-warning-400 text-xs mt-2">
+                      Set your avatar and voice in Profile Settings first
+                    </p>
+                  )}
+                </div>
               </div>
             )}
           </div>
@@ -330,7 +472,8 @@ const LessonViewer: React.FC = () => {
           </div>
         </motion.div>
       </div>
-    </div>
+      </div>
+    </Layout>
   );
 };
 

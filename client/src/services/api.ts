@@ -263,11 +263,7 @@ export const progressAPI = {
 
 // Assets API
 export const assetsAPI = {
-  upload: async (file: File, type: string): Promise<{ success: boolean; asset: any }> => {
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('type', type);
-    
+  upload: async (formData: FormData): Promise<{ success: boolean; asset: any }> => {
     const response = await api.post('/assets/upload', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',

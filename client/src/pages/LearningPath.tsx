@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { learningPathsAPI, lessonsAPI } from '../services/api';
 import toast from 'react-hot-toast';
+import Layout from '../components/Layout/Layout';
 
 interface Lesson {
   _id: string;
@@ -111,7 +112,8 @@ const LearningPath: React.FC = () => {
   }
 
   return (
-    <div className="space-y-8">
+    <Layout>
+      <div className="space-y-8">
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -276,7 +278,8 @@ const LearningPath: React.FC = () => {
         </div>
         <p className="text-dark-300 leading-relaxed">{learningPath.goal}</p>
       </motion.div>
-    </div>
+      </div>
+    </Layout>
   );
 };
 

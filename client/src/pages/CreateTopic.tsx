@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { topicsAPI } from '../services/api';
+import Layout from '../components/Layout/Layout';
 
 const createTopicSchema = z.object({
   title: z.string().min(3, 'Title must be at least 3 characters'),
@@ -126,7 +127,8 @@ const CreateTopic: React.FC = () => {
   };
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <Layout>
+      <div className="max-w-4xl mx-auto">
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -451,7 +453,8 @@ const CreateTopic: React.FC = () => {
           )}
         </motion.div>
       </div>
-    </div>
+      </div>
+    </Layout>
   );
 };
 

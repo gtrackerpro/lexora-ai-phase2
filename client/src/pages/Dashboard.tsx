@@ -18,6 +18,7 @@ import {
 import StatsCard from '../components/Dashboard/StatsCard';
 import TopicCard from '../components/Dashboard/TopicCard';
 import RecentActivity from '../components/Dashboard/RecentActivity';
+import Layout from '../components/Layout/Layout';
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -82,7 +83,8 @@ const Dashboard: React.FC = () => {
   };
 
   return (
-    <div className="space-y-8 pb-8">
+    <Layout>
+      <div className="space-y-8 pb-8">
       {/* Hero Section */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -374,7 +376,8 @@ const Dashboard: React.FC = () => {
           </motion.div>
         </div>
       </div>
-    </div>
+      </div>
+    </Layout>
   );
 };
 
