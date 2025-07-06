@@ -128,7 +128,7 @@ const Sidebar: React.FC = () => {
           </div>
         </motion.div>
 
-        {/* Learning Streak */}
+        {/* Enhanced Learning Streak */}
         <motion.div
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
@@ -136,7 +136,7 @@ const Sidebar: React.FC = () => {
           className="relative overflow-hidden rounded-2xl"
         >
           <div className="absolute inset-0 bg-gradient-to-br from-primary-600/20 to-accent-600/20"></div>
-          <div className="relative p-6 text-center">
+          <div className="relative p-6 text-center space-y-4">
             <div className="flex items-center justify-center mb-4">
               <img 
                 src="/lexora-logo.png" 
@@ -145,7 +145,7 @@ const Sidebar: React.FC = () => {
               />
               <span className="text-lg font-bold text-gradient">Lexora</span>
             </div>
-            <div className="flex items-center justify-center space-x-2 mb-3">
+            <div className="flex items-center justify-center space-x-2">
               <Zap className="w-6 h-6 text-yellow-400 animate-bounce-subtle" />
               <h3 className="text-lg font-bold text-white">Learning Streak</h3>
             </div>
@@ -153,8 +153,11 @@ const Sidebar: React.FC = () => {
             <p className="text-sm text-dark-300 mb-3">Days in a row</p>
             <div className="flex justify-center space-x-1">
               {[...Array(7)].map((_, i) => (
-                <div
+                <motion.div
                   key={i}
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ delay: i * 0.1 + 1 }}
                   className={`w-2 h-2 rounded-full ${
                     i < 5 ? 'bg-primary-500 shadow-glow-sm' : 'bg-dark-700'
                   }`}
