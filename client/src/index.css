@@ -230,6 +230,30 @@
     @apply status-dot bg-error-500 shadow-glow-sm;
   }
 
+  /* Custom Scrollbar */
+  .custom-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: #4b5563 transparent;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background-color: #4b5563;
+    border-radius: 3px;
+    transition: background-color 0.2s ease;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background-color: #6b7280;
+  }
+
   /* Dividers */
   .divider {
     @apply border-t border-dark-800;

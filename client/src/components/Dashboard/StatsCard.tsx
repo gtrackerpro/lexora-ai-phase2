@@ -51,18 +51,18 @@ const StatsCard: React.FC<StatsCardProps> = ({
       whileHover={{ scale: 1.02, y: -5 }}
       className="group relative overflow-hidden"
     >
-      {/* Background Glow Effect */}
-      <div className={`absolute inset-0 bg-gradient-to-r ${colorClasses[color]} opacity-0 group-hover:opacity-10 transition-opacity duration-300 rounded-2xl blur`}></div>
+      {/* Enhanced Background Glow Effect */}
+      <div className={`absolute inset-0 bg-gradient-to-r ${colorClasses[color]} opacity-0 group-hover:opacity-20 transition-all duration-500 rounded-2xl blur-xl`}></div>
       
       {/* Card Content */}
-      <div className="relative glass-card hover:border-dark-600 transition-all duration-300">
+      <div className="relative glass-card hover:border-dark-600 hover:shadow-glow transition-all duration-300">
         <div className="flex items-start justify-between">
           <div className="flex-1">
             <p className="text-sm font-medium text-dark-400 mb-1">{title}</p>
             <motion.p 
               initial={{ scale: 0.8 }}
               animate={{ scale: 1 }}
-              transition={{ delay: index * 0.1 + 0.2 }}
+              transition={{ delay: index * 0.1 + 0.2, type: 'spring', stiffness: 200 }}
               className="text-3xl font-bold text-white mb-2"
             >
               {value}
@@ -88,11 +88,11 @@ const StatsCard: React.FC<StatsCardProps> = ({
             className={`relative p-3 rounded-xl bg-gradient-to-r ${colorClasses[color]} shadow-lg group-hover:shadow-glow transition-all duration-300`}
           >
             <Icon className="h-6 w-6 text-white" />
-            <div className={`absolute inset-0 bg-gradient-to-r ${colorClasses[color]} rounded-xl blur opacity-0 group-hover:opacity-50 transition-opacity duration-300`}></div>
+            <div className={`absolute inset-0 bg-gradient-to-r ${colorClasses[color]} rounded-xl blur-lg opacity-0 group-hover:opacity-75 transition-all duration-500`}></div>
           </motion.div>
         </div>
 
-        {/* Progress Bar (if applicable) */}
+        {/* Enhanced Progress Bar */}
         {typeof value === 'number' && value <= 100 && (
           <motion.div
             initial={{ width: 0 }}
@@ -100,19 +100,32 @@ const StatsCard: React.FC<StatsCardProps> = ({
             transition={{ delay: index * 0.1 + 0.5, duration: 0.8 }}
             className="mt-4"
           >
-            <div className="w-full bg-dark-800 rounded-full h-1.5 overflow-hidden">
+            <div className="w-full bg-dark-800 rounded-full h-2 overflow-hidden">
               <motion.div
                 initial={{ width: 0 }}
                 animate={{ width: `${value}%` }}
-                transition={{ delay: index * 0.1 + 0.7, duration: 1, ease: 'easeOut' }}
-                className={`h-full bg-gradient-to-r ${colorClasses[color]} rounded-full shadow-glow-sm`}
+                transition={{ delay: index * 0.1 + 0.7, duration: 1.2, ease: 'easeOut' }}
+                className={`h-full bg-gradient-to-r ${colorClasses[color]} rounded-full shadow-glow-sm relative overflow-hidden`}
+              />
+              {/* Shimmer effect */}
+              <motion.div
+                initial={{ x: '-100%' }}
+                animate={{ x: '100%' }}
+                transition={{ 
+                  delay: index * 0.1 + 1.5, 
+                  duration: 1, 
+                  ease: 'easeInOut',
+                  repeat: Infinity,
+                  repeatDelay: 3
+                }}
+                className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
               />
             </div>
           </motion.div>
         )}
 
-        {/* Hover Effect Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-r from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-2xl pointer-events-none"></div>
+        {/* Enhanced Hover Effect Overlay */}
+        <div className="absolute inset-0 bg-gradient-to-r from-white/10 via-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500 rounded-2xl pointer-events-none"></div>
       </div>
     </motion.div>
   );

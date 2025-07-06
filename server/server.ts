@@ -19,6 +19,7 @@ import lessonRoutes from './routes/lessons';
 import videoRoutes from './routes/videos';
 import progressRoutes from './routes/progress';
 import assetRoutes from './routes/assets';
+import userRoutes from './routes/users';
 
 // Connect to database
 connectDB();
@@ -47,7 +48,7 @@ app.use(express.urlencoded({ extended: true }));
 
 // Routes
 app.use('/api/auth', authRoutes);
-app.use('/api/users', authRoutes); // For /api/users/me routes
+app.use('/api/users', userRoutes);
 app.use('/api/topics', topicRoutes);
 app.use('/api/learning-paths', learningPathRoutes);
 app.use('/api/lessons', lessonRoutes);
