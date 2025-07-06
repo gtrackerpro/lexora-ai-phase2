@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
+import { useTopics, useProgressAnalytics } from '../hooks';
 import {
   BookOpen,
   Clock,
@@ -18,69 +19,33 @@ import {
 import StatsCard from '../components/Dashboard/StatsCard';
 import TopicCard from '../components/Dashboard/TopicCard';
 import RecentActivity from '../components/Dashboard/RecentActivity';
+import Grid from '../components/Common/Grid';
+import LoadingCard, { LoadingGrid } from '../components/Common/LoadingCard';
+import ErrorState from '../components/Common/ErrorState';
 import Layout from '../components/Layout/Layout';
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
 
-  const mockTopics = [
-    {
-      id: '1',
-      _id: '1',
-      title: 'Python Programming Masterclass',
-      description: 'Learn Python from scratch to advanced concepts with hands-on projects and real-world applications.',
-      progress: 65,
-      totalLessons: 42,
-      completedLessons: 27,
-      estimatedTime: '6 weeks',
-      difficulty: 'Beginner' as const,
-      rating: 4.8,
-    },
-    {
-      id: '2',
-      _id: '2',
-      title: 'Web Development Fundamentals',
-      description: 'Master HTML, CSS, and JavaScript to build modern, responsive websites from the ground up.',
-      progress: 30,
-      totalLessons: 38,
-      completedLessons: 11,
-      estimatedTime: '8 weeks',
-      difficulty: 'Beginner' as const,
-      rating: 4.9,
-    },
-    {
-      id: '3',
-      _id: '3',
-      title: 'Data Science with Python',
-      description: 'Dive into data analysis, visualization, and machine learning using Python and popular libraries.',
-      progress: 0,
-      totalLessons: 56,
-      completedLessons: 0,
-      estimatedTime: '12 weeks',
-      difficulty: 'Intermediate' as const,
-      rating: 4.7,
-    },
-    {
-      id: '4',
-      _id: '4',
-      title: 'Machine Learning Fundamentals',
-      description: 'Understand the core concepts of machine learning and build your first AI models.',
-      progress: 100,
-      totalLessons: 32,
-      completedLessons: 32,
-      estimatedTime: '10 weeks',
-      difficulty: 'Advanced' as const,
-      rating: 4.9,
-    },
-  ];
+  // Fetch real data using custom hooks
+  const { data: topics, isLoading: topicsLoading, error: topicsError, refetch: refetchTopics } = useTopics();
+  const { data: analytics, isLoading: analyticsLoading, error: analyticsError } = useProgressAnalytics();
+
+  const handleCreateNewTopic = () => {
+    navigate('/create-topic');
+  };
 
   const handleContinueTopic = (topicId: string) => {
     navigate(`/learning/${topicId}`);
   };
 
-  const handleCreateNewTopic = () => {
-    navigate('/create-topic');
-  };
+  // Calculate stats from real data
+  const statsData = analytics ? {
+    totalHours: analytics.totalHours,
+    completedLessons: analytics.completedLessons,
+    currentStreak: analytics.currentStreak,
+    achievements: Math.floor(analytics.completedLessons / 5) // 1 achievement per 5 lessons
+  } : null;
 
   return (
     <Layout>
@@ -167,48 +132,65 @@ const Dashboard: React.FC = () => {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
-        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
+        className="space-y-6"
       >
-        <StatsCard
-          title="Total Learning Hours"
-          value="127.5"
-          change="+12.5 this week"
-          changeType="positive"
-          icon={Clock}
-          color="primary"
-          index={0}
-        />
-        <StatsCard
-          title="Lessons Completed"
-          value="89"
-          change="+7 this week"
-          changeType="positive"
-          icon={BookOpen}
-          color="green"
-          index={1}
-        />
-        <StatsCard
-          title="Current Streak"
-          value="15 days"
-          change="Personal best!"
-          changeType="positive"
-          icon={Zap}
-          color="orange"
-          index={2}
-        />
-        <StatsCard
-          title="Achievements"
-          value="24"
-          change="+3 this month"
-          changeType="positive"
-          icon={Award}
-          color="purple"
-          index={3}
-        />
+        {analyticsLoading ? (
+          <Grid cols={4} gap="md" className="mb-8">
+            {Array.from({ length: 4 }).map((_, index) => (
+              <LoadingCard key={index} height="h-32" />
+            ))}
+          </Grid>
+        ) : analyticsError ? (
+          <ErrorState 
+            title="Failed to load statistics"
+            message="We couldn't load your learning statistics. Please try again."
+            onRetry={() => window.location.reload()}
+            className="py-8"
+          />
+        ) : statsData ? (
+          <Grid cols={4} gap="md" animate>
+            <StatsCard
+              title="Total Learning Hours"
+              value={statsData.totalHours.toString()}
+              change="+2.5 this week"
+              changeType="positive"
+              icon={Clock}
+              color="primary"
+              index={0}
+            />
+            <StatsCard
+              title="Lessons Completed"
+              value={statsData.completedLessons.toString()}
+              change="+3 this week"
+              changeType="positive"
+              icon={BookOpen}
+              color="green"
+              index={1}
+            />
+            <StatsCard
+              title="Current Streak"
+              value={`${statsData.currentStreak} days`}
+              change={statsData.currentStreak > 0 ? "Keep it up!" : "Start today!"}
+              changeType={statsData.currentStreak > 0 ? "positive" : "neutral"}
+              icon={Zap}
+              color="orange"
+              index={2}
+            />
+            <StatsCard
+              title="Achievements"
+              value={statsData.achievements.toString()}
+              change="+1 this month"
+              changeType="positive"
+              icon={Award}
+              color="purple"
+              index={3}
+            />
+          </Grid>
+        ) : null}
       </motion.div>
 
       {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <Grid cols={3} gap="lg" responsive={false} className="lg:grid-cols-3">
         {/* Learning Paths */}
         <div className="lg:col-span-2 space-y-6">
           <motion.div
@@ -221,29 +203,59 @@ const Dashboard: React.FC = () => {
               <h2 className="text-2xl font-bold text-white">Your Learning Paths</h2>
               <p className="text-dark-400 mt-1">Continue where you left off</p>
             </div>
-            <button className="text-primary-400 hover:text-primary-300 text-sm font-medium transition-colors">
+            <button 
+              onClick={() => navigate('/topics')}
+              className="text-primary-400 hover:text-primary-300 text-sm font-medium transition-colors"
+            >
               View All
             </button>
           </motion.div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {mockTopics.map((topic, index) => (
-              <TopicCard
-                key={topic.id}
-                title={topic.title}
-                description={topic.description}
-                topic={topic}
-                progress={topic.progress}
-                totalLessons={topic.totalLessons}
-                completedLessons={topic.completedLessons}
-                estimatedTime={topic.estimatedTime}
-                difficulty={topic.difficulty}
-                rating={topic.rating}
-                onContinue={() => handleContinueTopic(topic.id)}
-                index={index}
-              />
-            ))}
-          </div>
+          {topicsLoading ? (
+            <LoadingGrid count={4} />
+          ) : topicsError ? (
+            <ErrorState 
+              title="Failed to load learning paths"
+              message="We couldn't load your learning paths. Please try again."
+              onRetry={refetchTopics}
+              className="py-12"
+            />
+          ) : topics && topics.length > 0 ? (
+            <Grid cols={2} gap="md" animate>
+              {topics.slice(0, 4).map((topic, index) => (
+                <TopicCard
+                  key={topic._id}
+                  title={topic.title}
+                  description={topic.description}
+                  topic={topic}
+                  progress={0} // Will be calculated from progress data
+                  totalLessons={0} // Will be fetched from lessons
+                  completedLessons={0} // Will be calculated from progress
+                  estimatedTime="6 weeks" // Default estimate
+                  difficulty="Beginner" // Default difficulty
+                  rating={4.5} // Default rating
+                  onContinue={() => handleContinueTopic(topic._id)}
+                  index={index}
+                />
+              ))}
+            </Grid>
+          ) : (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="text-center py-12"
+            >
+              <BookOpen className="h-16 w-16 text-dark-600 mx-auto mb-4" />
+              <h3 className="text-xl font-semibold text-white mb-2">No Learning Paths Yet</h3>
+              <p className="text-dark-400 mb-6">Create your first AI-powered learning path to get started</p>
+              <button
+                onClick={handleCreateNewTopic}
+                className="btn-primary px-6 py-3"
+              >
+                Create Learning Path
+              </button>
+            </motion.div>
+          )}
         </div>
 
         {/* Sidebar */}
@@ -379,7 +391,7 @@ const Dashboard: React.FC = () => {
             </motion.button>
           </motion.div>
         </div>
-      </div>
+      </Grid>
       </div>
     </Layout>
   );
