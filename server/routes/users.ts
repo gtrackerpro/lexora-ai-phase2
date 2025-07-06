@@ -1,11 +1,13 @@
 import express from 'express';
 import { 
-  getMe, 
-  updatePreferences,
   getUserActivity,
   getUserStreak,
   getUserSummary
 } from '../controllers/userController';
+import { 
+  getMe, 
+  updatePreferences
+} from '../controllers/authController';
 import { protect } from '../middleware/auth';
 
 const router = express.Router();
