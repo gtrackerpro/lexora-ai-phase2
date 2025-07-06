@@ -154,7 +154,7 @@ export const googleCallback = (req: Request, res: Response) => {
 
     // Redirect to frontend with token
     res.redirect(`${process.env.CLIENT_URL}/auth/callback?token=${token}&user=${encodeURIComponent(JSON.stringify({
-      id: user._id,
+      id: user._id.toString(),
       email: user.email,
       displayName: user.displayName,
       avatar: user.avatar,
@@ -168,7 +168,7 @@ export const googleCallback = (req: Request, res: Response) => {
 // @access  Private
 export const getMe = async (req: Request, res: Response) => {
   try {
-    const user = await User.findById(req.user?._id).populate('avatarId voiceId');
+    const user = await User.findById(req.user?._id);
     
     res.status(200).json({
       success: true,
