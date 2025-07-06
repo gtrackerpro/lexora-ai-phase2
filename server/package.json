@@ -6,6 +6,12 @@
     "dev": "npx nodemon --exec ts-node server.ts",
     "build": "tsc",
     "start": "node dist/server.js",
+    "wav2lip:build": "cd Wav2Lip && ./run.sh build",
+    "wav2lip:run": "cd Wav2Lip && ./run.sh run",
+    "wav2lip:stop": "cd Wav2Lip && ./run.sh stop",
+    "wav2lip:logs": "cd Wav2Lip && ./run.sh logs",
+    "wav2lip:health": "cd Wav2Lip && ./run.sh health",
+    "wav2lip:clean": "cd Wav2Lip && ./run.sh clean",
     "seed": "ts-node seed.ts",
     "seed:clear": "ts-node -e \"import('./seed').then(m => m.default())\"",
     "test": "echo \"Error: no test specified\" && exit 1"

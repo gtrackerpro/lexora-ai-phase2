@@ -162,9 +162,7 @@ export const deleteVideo = async (req: Request, res: Response) => {
 // @access  Private
 export const getAvailableVoices = async (req: Request, res: Response) => {
   try {
-    const voices = await import('../services/ttsService').then(module => 
-      module.default.getAvailableVoices()
-    );
+    const voices = await videoService.getAvailableVoices();
     
     res.status(200).json({
       success: true,
@@ -195,6 +193,26 @@ export const cleanupTempFiles = async (req: Request, res: Response) => {
     res.status(500).json({
       success: false,
       message: 'Failed to clean up temporary files'
+    });
+  }
+};
+// @desc    Check Wav2Lip service health
+// @route   GET /api/videos/wav2lip/health
+// @access  Private
+export const checkWav2LipHealth = async (req: Request, res: Response) => {
+  try {
+    const isHealthy = await videoService.checkWav2LipHealth();
+    
+    res.status(200).json({
+      success: true,
+      healthy: isHealthy,
+      message: isHealthy ? 'Wav2Lip service is healthy' : 'Wav2Lip service is not responding'
+    });
+  } catch (error) {
+    console.error('Wav2Lip Health Check Error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to check Wav2Lip service health'
     });
   }
 };
