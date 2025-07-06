@@ -87,8 +87,8 @@ export const login = async (req: Request, res: Response) => {
     }
 
     // Check for user
-    const user = await ServerUser.findOne({ email }).select('+password') as HydratedDocument<IServerUser>;
-    if (!user) {
+    const dbUser = await ServerUser.findOne({ email }).select('+password') as HydratedDocument<IServerUser>;
+    if (!dbUser) {
       return res.status(401).json({
         success: false,
         message: 'Invalid credentials'
@@ -96,7 +96,7 @@ export const login = async (req: Request, res: Response) => {
     }
 
     // Check if password matches
-    const isMatch = await user.comparePassword(password);
+    const isMatch = await dbUser.comparePassword(password);
     if (!isMatch) {
       return res.status(401).json({
         success: false,
@@ -105,20 +105,20 @@ export const login = async (req: Request, res: Response) => {
     }
 
     // Update last login
-    user.lastLogin = new Date();
-    await user.save();
+    dbUser.lastLogin = new Date();
+    await dbUser.save();
 
     // Generate token
-    const token = generateToken(user._id.toString());
+    const token = generateToken(dbUser._id.toString());
 
     res.status(200).json({
       success: true,
       token,
       user: {
-        id: user._id.toString(),
-        email: user.email,
-        displayName: user.displayName,
-        preferences: user.preferences
+        id: dbUser._id.toString(),
+        email: dbUser.email,
+        displayName: dbUser.displayName,
+        preferences: dbUser.preferences
       }
     });
   } catch (error) {
@@ -140,26 +140,26 @@ export const googleAuth = passport.authenticate('google', {
 // @route   GET /api/auth/google/callback
 // @access  Public
 export const googleCallback = (req: Request, res: Response) => {
-  passport.authenticate('google', { session: false }, (err: any, user: HydratedDocument<IServerUser>) => {
+  passport.authenticate('google', { session: false }, (err: any, dbUser: HydratedDocument<IServerUser>) => {
     if (err) {
       console.error('Google OAuth callback error:', err);
       return res.redirect(`${process.env.CLIENT_URL}/login?error=oauth_error`);
     }
 
-    if (!user) {
+    if (!dbUser) {
       return res.redirect(`${process.env.CLIENT_URL}/login?error=oauth_failed`);
     }
 
     // Generate JWT token
-    const token = generateToken(user._id.toString());
+    const token = generateToken(dbUser._id.toString());
 
     // Redirect to frontend with token
     res.redirect(`${process.env.CLIENT_URL}/auth/callback?token=${token}&user=${encodeURIComponent(JSON.stringify({
-      id: user._id.toString(),
-      email: user.email,
-      displayName: user.displayName,
-      avatar: user.avatar,
-      preferences: user.preferences
+      id: dbUser._id.toString(),
+      email: dbUser.email,
+      displayName: dbUser.displayName,
+      avatar: dbUser.avatar,
+      preferences: dbUser.preferences
     }))}`);
   })(req, res);
 };
