@@ -5,8 +5,7 @@ import ServerUser, { IUser as IServerUser } from '../models/User';
 // Extend Express Request interface to include user property
 declare global {
   namespace Express {
-    interface Request {
-      user?: IServerUser;
+    interface User extends IServerUser {
     }
   }
 }
