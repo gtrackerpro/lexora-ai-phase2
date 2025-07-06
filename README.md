@@ -101,6 +101,11 @@ MONGODB_URI=mongodb://localhost:27017/lexora
 JWT_SECRET=your-super-secret-jwt-key-here-make-it-long-and-random
 JWT_EXPIRE=7d
 
+# Google OAuth Configuration
+GOOGLE_CLIENT_ID=your-google-client-id-here
+GOOGLE_CLIENT_SECRET=your-google-client-secret-here
+GOOGLE_REDIRECT_URI=http://localhost:5000/api/auth/google/callback
+
 # AWS S3 Configuration (Optional for file uploads)
 AWS_ACCESS_KEY_ID=your-aws-access-key
 AWS_SECRET_ACCESS_KEY=your-aws-secret-key
