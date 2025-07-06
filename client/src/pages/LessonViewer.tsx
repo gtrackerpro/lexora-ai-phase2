@@ -3,19 +3,16 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   ArrowLeft,
-  Play,
-  Pause,
-  Volume2,
-  VolumeX,
-  Maximize,
-  RotateCcw,
   CheckCircle,
   BookOpen,
   MessageSquare,
   Clock,
   Target
 } from 'lucide-react';
+import VideoPlayer from '../components/LessonViewer/VideoPlayer';
+import LoadingSpinner from '../components/Common/LoadingSpinner';
 import { lessonsAPI, progressAPI, videosAPI } from '../services/api';
+import { useAnalytics } from '../utils/analytics';
 import toast from 'react-hot-toast';
 
 interface Lesson {
@@ -46,19 +43,15 @@ interface Progress {
 const LessonViewer: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const videoRef = useRef<HTMLVideoElement>(null);
+  const { trackLessonStarted, trackLessonCompleted, trackVideoProgress } = useAnalytics();
   
   const [lesson, setLesson] = useState<Lesson | null>(null);
   const [video, setVideo] = useState<Video | null>(null);
   const [progress, setProgress] = useState<Progress | null>(null);
   const [loading, setLoading] = useState(true);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [isMuted, setIsMuted] = useState(false);
-  const [currentTime, setCurrentTime] = useState(0);
-  const [duration, setDuration] = useState(0);
-  const [showTranscript, setShowTranscript] = useState(false);
   const [notes, setNotes] = useState('');
   const [activeTab, setActiveTab] = useState<'overview' | 'transcript' | 'notes'>('overview');
+  const [watchTime, setWatchTime] = useState(0);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -81,6 +74,15 @@ const LessonViewer: React.FC = () => {
           setProgress(progressResponse.progress);
           setNotes(progressResponse.progress.notes.join('\n'));
         }
+        
+        // Track lesson started
+        if (lessonResponse.success && lessonResponse.lesson) {
+          trackLessonStarted(
+            lessonResponse.lesson._id,
+            lessonResponse.lesson.title,
+            lessonResponse.lesson.topicId
+          );
+        }
       } catch (error) {
         console.error('Failed to fetch lesson:', error);
         toast.error('Failed to load lesson');
@@ -92,67 +94,22 @@ const LessonViewer: React.FC = () => {
     fetchData();
   }, [id]);
 
-  useEffect(() => {
-    const video = videoRef.current;
-    if (!video) return;
-
-    const updateTime = () => setCurrentTime(video.currentTime);
-    const updateDuration = () => setDuration(video.duration);
-    const handlePlay = () => setIsPlaying(true);
-    const handlePause = () => setIsPlaying(false);
-
-    video.addEventListener('timeupdate', updateTime);
-    video.addEventListener('loadedmetadata', updateDuration);
-    video.addEventListener('play', handlePlay);
-    video.addEventListener('pause', handlePause);
-
-    return () => {
-      video.removeEventListener('timeupdate', updateTime);
-      video.removeEventListener('loadedmetadata', updateDuration);
-      video.removeEventListener('play', handlePlay);
-      video.removeEventListener('pause', handlePause);
-    };
-  }, [video]);
-
-  const togglePlay = () => {
-    const videoElement = videoRef.current;
-    if (!videoElement) return;
-
-    if (isPlaying) {
-      videoElement.pause();
-    } else {
-      videoElement.play();
-    }
+  const handleVideoProgress = (progressPercent: number) => {
+    // Track video progress milestones
+    trackVideoProgress(lesson?._id || '', progressPercent, video?.durationSec || 0);
   };
-
-  const toggleMute = () => {
-    const videoElement = videoRef.current;
-    if (!videoElement) return;
-
-    videoElement.muted = !videoElement.muted;
-    setIsMuted(videoElement.muted);
-  };
-
-  const handleSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const videoElement = videoRef.current;
-    if (!videoElement) return;
-
-    const time = (parseFloat(e.target.value) / 100) * duration;
-    videoElement.currentTime = time;
-    setCurrentTime(time);
-  };
-
-  const updateProgress = async () => {
+  
+  const handleVideoComplete = async () => {
     if (!lesson || !id) return;
 
-    const watchedPercentage = duration > 0 ? (currentTime / duration) * 100 : 0;
-    const completed = watchedPercentage >= 90; // Consider completed if 90% watched
+    const completed = true;
+    const watchedPercentage = 100;
 
     try {
       await progressAPI.updateProgress({
         lessonId: id,
-        learningPathId: lesson.learningPathId,
-        topicId: lesson.topicId,
+        learningPathId: lesson.learningPathId || '',
+        topicId: lesson.topicId || '',
         videoId: video?._id,
         watchedPercentage,
         completed,
@@ -161,6 +118,14 @@ const LessonViewer: React.FC = () => {
 
       if (completed && !progress?.completed) {
         toast.success('Lesson completed! 🎉');
+        
+        // Track lesson completion
+        trackLessonCompleted(
+          lesson._id,
+          lesson.title,
+          watchTime,
+          watchedPercentage
+        );
       }
     } catch (error) {
       console.error('Failed to update progress:', error);
@@ -179,16 +144,10 @@ const LessonViewer: React.FC = () => {
     }
   };
 
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = Math.floor(seconds % 60);
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
-  };
-
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500"></div>
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <LoadingSpinner size="lg" type="lesson" />
       </div>
     );
   }
@@ -247,77 +206,20 @@ const LessonViewer: React.FC = () => {
         >
           <div className="glass-card p-0 overflow-hidden">
             {video && video.status === 'completed' ? (
-              <div className="relative">
-                <video
-                  ref={videoRef}
-                  src={video.videoUrl}
-                  className="w-full aspect-video bg-black"
-                  onTimeUpdate={updateProgress}
-                />
-                
-                {/* Video Controls */}
-                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4">
-                  <div className="space-y-3">
-                    {/* Progress Bar */}
-                    <input
-                      type="range"
-                      min="0"
-                      max="100"
-                      value={duration > 0 ? (currentTime / duration) * 100 : 0}
-                      onChange={handleSeek}
-                      className="w-full h-1 bg-dark-600 rounded-lg appearance-none cursor-pointer slider"
-                    />
-                    
-                    {/* Controls */}
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-3">
-                        <button
-                          onClick={togglePlay}
-                          className="p-2 hover:bg-white/20 rounded-full transition-colors"
-                        >
-                          {isPlaying ? (
-                            <Pause className="h-6 w-6 text-white" />
-                          ) : (
-                            <Play className="h-6 w-6 text-white ml-0.5" />
-                          )}
-                        </button>
-                        
-                        <button
-                          onClick={toggleMute}
-                          className="p-2 hover:bg-white/20 rounded-full transition-colors"
-                        >
-                          {isMuted ? (
-                            <VolumeX className="h-5 w-5 text-white" />
-                          ) : (
-                            <Volume2 className="h-5 w-5 text-white" />
-                          )}
-                        </button>
-                        
-                        <span className="text-white text-sm">
-                          {formatTime(currentTime)} / {formatTime(duration)}
-                        </span>
-                      </div>
-                      
-                      <div className="flex items-center space-x-2">
-                        <button className="p-2 hover:bg-white/20 rounded-full transition-colors">
-                          <RotateCcw className="h-5 w-5 text-white" />
-                        </button>
-                        <button className="p-2 hover:bg-white/20 rounded-full transition-colors">
-                          <Maximize className="h-5 w-5 text-white" />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
+              <VideoPlayer
+                videoUrl={video.videoUrl}
+                title={lesson.title}
+                onProgress={handleVideoProgress}
+                onComplete={handleVideoComplete}
+                startTime={progress?.watchedPercentage ? (progress.watchedPercentage / 100) * video.durationSec : 0}
+              />
             ) : (
               <div className="aspect-video bg-dark-800 flex items-center justify-center">
-                <div className="text-center">
-                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500 mx-auto mb-4"></div>
-                  <p className="text-white">
-                    {video?.status === 'generating' ? 'Generating video...' : 'Video not available'}
-                  </p>
-                </div>
+                <LoadingSpinner 
+                  size="lg" 
+                  type={video?.status === 'generating' ? 'video' : 'default'}
+                  text={video?.status === 'generating' ? 'Generating video...' : 'Video not available'}
+                />
               </div>
             )}
           </div>
