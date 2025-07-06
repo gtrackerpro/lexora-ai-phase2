@@ -169,7 +169,7 @@ export const googleCallback = (req: Request, res: Response) => {
 // @access  Private
 export const getMe = async (req: Request, res: Response) => {
   try {
-    const user = await ServerUser.findById(req.user?._id);
+    const user = await ServerUser.findById((req.user as IServerUser)?._id);
     
     res.status(200).json({
       success: true,
@@ -191,7 +191,7 @@ export const updatePreferences = async (req: Request, res: Response) => {
     const { preferences } = req.body;
 
     const user = await ServerUser.findByIdAndUpdate(
-      req.user?._id,
+      (req.user as IServerUser)?._id,
       { preferences },
       { new: true, runValidators: true }
     );
