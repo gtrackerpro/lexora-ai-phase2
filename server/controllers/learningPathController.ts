@@ -1,4 +1,4 @@
-import { Response } from 'express';
+import { Request, Response } from 'express';
 import LearningPath from '../models/LearningPath';
 import Topic from '../models/Topic';
 

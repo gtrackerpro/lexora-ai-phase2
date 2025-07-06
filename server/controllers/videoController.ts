@@ -1,4 +1,4 @@
-import { Response } from 'express';
+import { Request, Response } from 'express';
 import Video from '../models/Video';
 import Lesson from '../models/Lesson';
 

@@ -1,4 +1,4 @@
-import { Response } from 'express';
+import { Request, Response } from 'express';
 import Topic from '../models/Topic';
 import LearningPath from '../models/LearningPath';
 import groqService from '../services/groqService';

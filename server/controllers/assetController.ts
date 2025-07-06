@@ -1,4 +1,4 @@
-import { Response } from 'express';
+import { Request, Response } from 'express';
 import Asset from '../models/Asset';
 import awsService from '../services/awsService';
 import multer from 'multer';
