@@ -189,18 +189,45 @@ export const getMe = async (req: Request, res: Response) => {
 export const updatePreferences = async (req: Request, res: Response) => {
   try {
     const { preferences } = req.body;
+    
+    // Extract avatarId and voiceId from preferences if they exist
+    const { avatarId, voiceId, ...otherPreferences } = preferences || {};
+    
+    // Prepare update object
+    const updateObj: any = {};
+    
+    // Update preferences (excluding avatarId and voiceId)
+    if (Object.keys(otherPreferences).length > 0) {
+      updateObj.preferences = otherPreferences;
+    }
+    
+    // Update avatarId and voiceId at root level if provided
+    if (avatarId !== undefined) {
+      updateObj.avatarId = avatarId || null;
+    }
+    if (voiceId !== undefined) {
+      updateObj.voiceId = voiceId || null;
+    }
 
     const user = await ServerUser.findByIdAndUpdate(
       (req.user as IServerUser)?._id,
-      { preferences },
+      updateObj,
       { new: true, runValidators: true }
     );
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
 
     res.status(200).json({
       success: true,
       user
     });
   } catch (error) {
+    console.error('Update preferences error:', error);
     res.status(500).json({
       success: false,
       message: 'Server error'
