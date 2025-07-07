@@ -22,11 +22,11 @@ import Layout from '../components/Layout/Layout';
 
 const createTopicSchema = z.object({
   title: z.string().min(3, 'Title must be at least 3 characters'),
-  description: z.string().min(10, 'Description must be at least 10 characters'),
+  description: z.string().optional(),
   tags: z.array(z.string()).min(1, 'At least one tag is required'),
   difficulty: z.enum(['Beginner', 'Intermediate', 'Advanced']),
   weeks: z.enum(['4', '6', '8', '12']),
-  goals: z.string().min(10, 'Please describe your learning goals (at least 10 characters)'),
+  goals: z.string().optional(),
 });
 
 type CreateTopicFormData = z.infer<typeof createTopicSchema>;
@@ -96,13 +96,17 @@ const CreateTopic: React.FC = () => {
     setIsGenerating(true);
     
     try {
+      // Generate smart defaults if fields are empty
+      const description = data.description?.trim() || `A comprehensive learning path about ${data.title} designed to help you master this subject.`;
+      const goals = data.goals?.trim() || `Gain a solid understanding of ${data.title} concepts and be able to apply them in practical scenarios.`;
+      
       const response = await topicsAPI.create({
         title: data.title,
-        description: data.description,
+        description,
         tags: tags,
         difficulty: data.difficulty,
         weeks: parseInt(data.weeks),
-        goals: data.goals,
+        goals,
       });
 
       if (response.success) {
@@ -194,13 +198,13 @@ const CreateTopic: React.FC = () => {
             {/* Description */}
             <div>
               <label className="block text-sm font-medium text-white mb-2">
-                Description
+                Description (optional)
               </label>
               <textarea
                 {...register('description')}
                 rows={3}
                 className="input-field w-full resize-none"
-                placeholder="Describe what you want to learn and your current knowledge level..."
+                placeholder="Describe what you want to learn and your current knowledge level (we'll generate this if left empty)..."
               />
               {errors.description && (
                 <p className="mt-1 text-sm text-red-400">{errors.description.message}</p>
@@ -344,13 +348,13 @@ const CreateTopic: React.FC = () => {
             {/* Learning Goals */}
             <div>
               <label className="block text-sm font-medium text-white mb-2">
-                What are your learning goals?
+                What are your learning goals? (optional)
               </label>
               <textarea
                 {...register('goals')}
                 rows={4}
                 className="input-field w-full resize-none"
-                placeholder="Describe what you want to achieve, any specific skills you want to develop, or projects you want to build..."
+                placeholder="Describe what you want to achieve, specific skills you want to develop, or projects you want to build (we'll generate this if left empty)..."
               />
               {errors.goals && (
                 <p className="mt-1 text-sm text-red-400">{errors.goals.message}</p>
