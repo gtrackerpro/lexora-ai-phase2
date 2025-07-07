@@ -26,11 +26,17 @@ const videoSchema = new Schema<IVideo>({
   },
   videoUrl: {
     type: String,
-    required: true
+    required: function(this: IVideo) {
+      return this.status === 'completed';
+    },
+    default: ''
   },
   audioUrl: {
     type: String,
-    required: true
+    required: function(this: IVideo) {
+      return this.status === 'completed';
+    },
+    default: ''
   },
   avatarId: {
     type: Schema.Types.ObjectId,

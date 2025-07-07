@@ -36,10 +36,15 @@ const limiter = rateLimit({
 });
 app.use(limiter);
 
-// CORS
+// CORS - Enhanced configuration for proper preflight handling
 app.use(cors({
-  origin: process.env.CLIENT_URL || 'http://localhost:5173',
-  credentials: true
+  origin: [process.env.CLIENT_URL || 'http://localhost:5173', 'http://localhost:5173'],
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  exposedHeaders: ['Content-Range', 'X-Content-Range'],
+  preflightContinue: false,
+  optionsSuccessStatus: 204
 }));
 
 // Body parser
@@ -63,6 +68,58 @@ app.get('/api/health', (req, res) => {
     message: 'Lexora API is running',
     timestamp: new Date().toISOString()
   });
+});
+
+// Debug endpoint to check assets
+app.get('/api/debug/assets', async (req, res) => {
+  try {
+    const { default: Asset } = await import('./models/Asset');
+    const assets = await Asset.find({}).sort({ createdAt: -1 }).limit(10);
+    res.json({
+      success: true,
+      count: assets.length,
+      assets: assets.map((asset: any) => ({
+        _id: asset._id,
+        type: asset.type,
+        fileName: asset.fileName,
+        mimeType: asset.mimeType,
+        userId: asset.userId,
+        createdAt: asset.createdAt
+      }))
+    });
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Debug endpoint to check lesson and user data
+app.get('/api/debug/lesson/:id', async (req, res) => {
+  try {
+    const { default: Lesson } = await import('./models/Lesson');
+    const { default: User } = await import('./models/User');
+    const lesson = await Lesson.findById(req.params.id);
+    const users = await User.find({}).select('_id email displayName avatarId voiceId').limit(5);
+    
+    res.json({
+      success: true,
+      lesson: lesson ? {
+        _id: lesson._id,
+        title: lesson.title,
+        userId: lesson.userId,
+        script: lesson.script ? `${lesson.script.substring(0, 100)}...` : 'No script',
+        hasScript: !!lesson.script
+      } : null,
+      users: users.map((user: any) => ({
+        _id: user._id,
+        email: user.email,
+        displayName: user.displayName,
+        avatarId: user.avatarId,
+        voiceId: user.voiceId
+      }))
+    });
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: error.message });
+  }
 });
 
 // Error handler

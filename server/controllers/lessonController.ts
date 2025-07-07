@@ -221,22 +221,56 @@ export const generateLessonVideo = async (req: Request, res: Response) => {
     const { avatarId, voiceId } = req.body;
     const lessonId = req.params.id;
 
+    console.log(`Starting video generation for lesson: ${lessonId}`);
+    console.log(`Request body:`, { avatarId, voiceId });
+    console.log(`User ID: ${req.user?._id}`);
+
+    // Validate request data
+    if (!avatarId || !voiceId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Avatar ID and Voice ID are required'
+      });
+    }
+
     const lesson = await Lesson.findById(lessonId);
-    if (!lesson || lesson.userId.toString() !== req.user?._id.toString()) {
+    if (!lesson) {
+      console.log(`Lesson not found: ${lessonId}`);
       return res.status(404).json({
         success: false,
         message: 'Lesson not found'
       });
     }
 
+    if (lesson.userId.toString() !== req.user?._id.toString()) {
+      console.log(`Unauthorized access to lesson: ${lessonId} by user: ${req.user?._id}`);
+      return res.status(403).json({
+        success: false,
+        message: 'Not authorized to access this lesson'
+      });
+    }
+
+    // Check if lesson has a script
+    if (!lesson.script || lesson.script.trim().length === 0) {
+      console.log(`Lesson script is missing or empty for lesson: ${lessonId}`);
+      return res.status(400).json({
+        success: false,
+        message: 'Lesson script is required for video generation'
+      });
+    }
+
     // Check if video already exists
     const existingVideo = await Video.findOne({ lessonId });
     if (existingVideo) {
+      console.log(`Video already exists for lesson: ${lessonId}`);
       return res.status(400).json({
         success: false,
         message: 'Video already exists for this lesson'
       });
     }
+
+    console.log(`Calling video service for lesson: ${lessonId}`);
+    console.log(`Script length: ${lesson.script.length} characters`);
 
     // Start video generation process
     const video = await videoService.generateVideo({
@@ -247,6 +281,8 @@ export const generateLessonVideo = async (req: Request, res: Response) => {
       voiceId
     });
 
+    console.log(`Video generation started successfully for lesson: ${lessonId}`);
+
     res.status(201).json({
       success: true,
       video,
@@ -254,9 +290,11 @@ export const generateLessonVideo = async (req: Request, res: Response) => {
     });
   } catch (error) {
     console.error('Video Generation Error:', error);
+    console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace');
     res.status(500).json({
       success: false,
-      message: 'Failed to start video generation'
+      message: 'Failed to start video generation',
+      error: process.env.NODE_ENV === 'development' ? (error as Error)?.message : undefined
     });
   }
 };

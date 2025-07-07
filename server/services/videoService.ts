@@ -38,10 +38,27 @@ class VideoService {
         throw new Error('Lesson not found');
       }
 
+      console.log(`Looking up avatar asset with ID: ${avatarId}`);
+      
       // Get avatar asset (voice preferences will be handled by TTS service)
       const avatar = await Asset.findById(avatarId);
       if (!avatar) {
-        throw new Error('Avatar asset not found');
+        console.error(`Avatar asset not found with ID: ${avatarId}`);
+        throw new Error(`Avatar asset not found with ID: ${avatarId}. Please check if the avatar was uploaded properly.`);
+      }
+      
+      console.log(`Avatar found: ${avatar.fileName} (${avatar.mimeType})`);
+      console.log(`Avatar URL: ${avatar.fileUrl}`);
+      
+      // Validate voiceId if provided
+      if (voiceId) {
+        console.log(`Looking up voice asset with ID: ${voiceId}`);
+        const voice = await Asset.findById(voiceId);
+        if (!voice) {
+          console.error(`Voice asset not found with ID: ${voiceId}`);
+          throw new Error(`Voice asset not found with ID: ${voiceId}. Please check if the voice sample was uploaded properly.`);
+        }
+        console.log(`Voice found: ${voice.fileName} (${voice.mimeType})`);
       }
 
       // Create video record with generating status
