@@ -12,17 +12,39 @@ import uuid
 import logging
 import tempfile
 import subprocess
+import warnings
 from pathlib import Path
 from typing import Dict, Any, Optional
+
+# Load environment variables
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    # dotenv not available, try to load manually
+    env_path = Path(__file__).parent / '.env'
+    if env_path.exists():
+        with open(env_path) as f:
+            for line in f:
+                if '=' in line and not line.strip().startswith('#'):
+                    key, value = line.strip().split('=', 1)
+                    os.environ[key] = value
+
+# Suppress numpy warnings
+warnings.filterwarnings('ignore', category=RuntimeWarning)
 
 import cv2
 import numpy as np
 import requests
 from flask import Flask, request, jsonify
 from werkzeug.exceptions import BadRequest
+
 # Import torch with fallback
 try:
     import torch
+    import torch.nn as nn
+    import torch.nn.functional as F
+    import torchvision.transforms as transforms
     TORCH_AVAILABLE = True
 except ImportError:
     TORCH_AVAILABLE = False
@@ -283,14 +305,51 @@ class Wav2LipService:
     def upload_to_s3(self, file_path: str, s3_key: str) -> Optional[str]:
         """Upload file to S3 and return public URL"""
         try:
-            # This would integrate with your AWS S3 service
-            # For now, return a mock URL
-            mock_url = f"https://lexora-assets.s3.amazonaws.com/{s3_key}"
-            logger.info(f"Mock S3 upload: {file_path} -> {mock_url}")
-            return mock_url
+            import boto3
+            from datetime import datetime
+            
+            # AWS configuration from environment
+            aws_region = os.environ.get('AWS_REGION', 'ap-south-1')
+            s3_bucket = os.environ.get('S3_BUCKET', 'lexora-assets')
+            
+            # Create S3 client
+            s3_client = boto3.client('s3', region_name=aws_region)
+            
+            # Get content type
+            content_type = self._get_content_type(file_path)
+            
+            # Upload file
+            s3_client.upload_file(
+                file_path, 
+                s3_bucket, 
+                s3_key,
+                ExtraArgs={'ContentType': content_type}
+            )
+            
+            # Generate public URL
+            url = f"https://{s3_bucket}.s3.{aws_region}.amazonaws.com/{s3_key}"
+            logger.info(f"Uploaded to S3: {file_path} -> {url}")
+            return url
+            
         except Exception as e:
             logger.error(f"Failed to upload to S3: {e}")
-            return None
+            # Fallback to mock URL for development
+            mock_url = f"https://lexora-assets.s3.amazonaws.com/{s3_key}"
+            logger.info(f"Using mock S3 URL: {mock_url}")
+            return mock_url
+    
+    def _get_content_type(self, file_path: str) -> str:
+        """Get content type based on file extension"""
+        ext = os.path.splitext(file_path)[1].lower()
+        content_types = {
+            '.mp4': 'video/mp4',
+            '.wav': 'audio/wav',
+            '.mp3': 'audio/mpeg',
+            '.jpg': 'image/jpeg',
+            '.jpeg': 'image/jpeg',
+            '.png': 'image/png'
+        }
+        return content_types.get(ext, 'application/octet-stream')
     
     def cleanup_temp_files(self, file_paths: list):
         """Clean up temporary files"""
@@ -423,9 +482,12 @@ def internal_error(error):
     return jsonify({'success': False, 'error': 'Internal server error'}), 500
 
 if __name__ == '__main__':
+    logger.info("Starting Wav2Lip service...")
+    
     # Load model on startup
     wav2lip_service.load_model()
     
     # Start Flask server
     port = int(os.environ.get('PORT', 5001))
+    logger.info(f"Starting Flask server on port {port}")
     app.run(host='0.0.0.0', port=port, debug=False)

@@ -15,6 +15,20 @@ from pathlib import Path
 from typing import Dict, Any, Optional
 from datetime import datetime
 
+# Load environment variables from .env file
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    # dotenv not available, try to load manually
+    env_path = Path(__file__).parent / '.env'
+    if env_path.exists():
+        with open(env_path) as f:
+            for line in f:
+                if '=' in line and not line.strip().startswith('#'):
+                    key, value = line.strip().split('=', 1)
+                    os.environ[key] = value
+
 import requests
 from flask import Flask, request, jsonify
 from werkzeug.exceptions import BadRequest
@@ -211,7 +225,117 @@ class EnhancedWav2LipService:
             return False
     
     def generate_enhanced_video(self, image_path: str, audio_path: str, output_path: str) -> bool:
-        """Generate enhanced video with better quality settings"""
+        """Generate enhanced video with subtle lip animation"""
+        try:
+            # First create an animated version of the image with basic lip movement
+            animated_video_path = output_path.replace('.mp4', '_animated.mp4')
+            
+            if self._create_animated_avatar(image_path, audio_path, animated_video_path):
+                # Use the animated video instead of static image
+                logger.info("Generated enhanced video with lip animation")
+                os.rename(animated_video_path, output_path)
+                return True
+            else:
+                # Fallback to static image method
+                return self._generate_static_video(image_path, audio_path, output_path)
+                
+        except Exception as e:
+            logger.error(f"Failed to generate enhanced video: {e}")
+            return self._generate_static_video(image_path, audio_path, output_path)
+    
+    def _create_animated_avatar(self, image_path: str, audio_path: str, output_path: str) -> bool:
+        """Create animated avatar with basic lip movement based on audio"""
+        try:
+            import cv2
+            
+            # Get audio duration and properties
+            duration = self.get_audio_duration(audio_path)
+            fps = 25
+            total_frames = int(duration * fps)
+            
+            # Load the avatar image
+            img = cv2.imread(image_path)
+            if img is None:
+                return False
+            
+            # Resize to standard dimensions
+            img = cv2.resize(img, (512, 512))
+            height, width = img.shape[:2]
+            
+            # Create video writer
+            fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+            temp_video = output_path.replace('.mp4', '_temp.mp4')
+            out = cv2.VideoWriter(temp_video, fourcc, fps, (width, height))
+            
+            # Generate frames with subtle mouth movement
+            for frame_num in range(total_frames):
+                frame = img.copy()
+                
+                # Calculate mouth animation based on time
+                time_ratio = frame_num / total_frames
+                
+                # Simple sine wave for mouth movement
+                mouth_open = abs(np.sin(time_ratio * duration * 8)) * 0.3  # 8 movements per second
+                
+                # Apply subtle mouth distortion (simulating speech)
+                if mouth_open > 0.1:
+                    # Define mouth region (adjust these coordinates based on your avatar)
+                    mouth_center_y = int(height * 0.75)  # Approximate mouth position
+                    mouth_center_x = int(width * 0.5)
+                    mouth_width = int(width * 0.15)
+                    mouth_height = int(height * 0.08)
+                    
+                    # Create subtle oval distortion for mouth opening
+                    y1 = max(0, mouth_center_y - mouth_height//2)
+                    y2 = min(height, mouth_center_y + mouth_height//2)
+                    x1 = max(0, mouth_center_x - mouth_width//2)
+                    x2 = min(width, mouth_center_x + mouth_width//2)
+                    
+                    # Apply subtle darkening to simulate mouth opening
+                    mouth_region = frame[y1:y2, x1:x2]
+                    if mouth_region.size > 0:
+                        mouth_region = cv2.addWeighted(mouth_region, 0.85, mouth_region, 0, -10)
+                        frame[y1:y2, x1:x2] = mouth_region
+                
+                out.write(frame)
+            
+            out.release()
+            
+            # Add audio to the animated video
+            cmd = [
+                'ffmpeg', '-y',
+                '-i', temp_video,
+                '-i', audio_path,
+                '-c:v', 'libx264',
+                '-preset', 'medium',
+                '-crf', '23',
+                '-c:a', 'aac',
+                '-b:a', '192k',
+                '-pix_fmt', 'yuv420p',
+                '-shortest',
+                '-movflags', '+faststart',
+                output_path
+            ]
+            
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=120)
+            
+            # Clean up temporary file
+            if os.path.exists(temp_video):
+                os.remove(temp_video)
+            
+            if result.returncode == 0:
+                logger.info(f"Generated animated avatar video: {output_path}")
+                return True
+            else:
+                logger.error(f"FFmpeg error in animation: {result.stderr}")
+                return False
+            
+        except Exception as e:
+            logger.error(f"Failed to create animated avatar: {e}")
+            return False
+    
+    def _generate_static_video(self, image_path: str, audio_path: str, output_path: str) -> bool:
+        """Fallback method for static video generation"""
         try:
             cmd = [
                 'ffmpeg', '-y',
@@ -230,11 +354,11 @@ class EnhancedWav2LipService:
                 output_path
             ]
             
-            logger.info("Generating enhanced video with FFmpeg...")
+            logger.info("Generating static video with FFmpeg...")
             result = subprocess.run(cmd, capture_output=True, text=True, timeout=120)
             
             if result.returncode == 0:
-                logger.info(f"Generated enhanced video: {output_path}")
+                logger.info(f"Generated static video: {output_path}")
                 return True
             else:
                 logger.error(f"FFmpeg error: {result.stderr}")
@@ -244,7 +368,7 @@ class EnhancedWav2LipService:
             logger.error("FFmpeg process timed out")
             return False
         except Exception as e:
-            logger.error(f"Failed to generate enhanced video: {e}")
+            logger.error(f"Failed to generate static video: {e}")
             return False
     
     def upload_to_s3(self, file_path: str, s3_key: str) -> Optional[str]:
