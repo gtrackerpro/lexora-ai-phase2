@@ -1,5 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
 // import { useTopics, useProgressAnalytics } from '../hooks';
 import {
   BookOpen,
@@ -279,7 +280,7 @@ const Dashboard: React.FC = () => {
               <h3 className="text-lg font-semibold text-white">Quick Actions</h3>
             </div>
             <div className="space-y-3">
-              <button
+              <motion.button
                 whileHover={{ scale: 1.02, x: 5 }}
                 className="w-full flex items-center space-x-3 p-4 text-left hover:bg-dark-800/50 rounded-xl transition-all duration-200 group"
               >
@@ -290,9 +291,9 @@ const Dashboard: React.FC = () => {
                   <span className="text-white font-medium">Set Learning Goals</span>
                   <p className="text-dark-400 text-sm">Define your objectives</p>
                 </div>
-              </button>
+              </motion.button>
               
-              <button
+              <motion.button
                 whileHover={{ scale: 1.02, x: 5 }}
                 className="w-full flex items-center space-x-3 p-4 text-left hover:bg-dark-800/50 rounded-xl transition-all duration-200 group"
               >
@@ -303,9 +304,9 @@ const Dashboard: React.FC = () => {
                   <span className="text-white font-medium">Schedule Study Time</span>
                   <p className="text-dark-400 text-sm">Plan your sessions</p>
                 </div>
-              </button>
+              </motion.button>
               
-              <button
+              <motion.button
                 whileHover={{ scale: 1.02, x: 5 }}
                 className="w-full flex items-center space-x-3 p-4 text-left hover:bg-dark-800/50 rounded-xl transition-all duration-200 group"
               >
@@ -316,7 +317,7 @@ const Dashboard: React.FC = () => {
                   <span className="text-white font-medium">View Progress Report</span>
                   <p className="text-dark-400 text-sm">Track your growth</p>
                 </div>
-              </button>
+              </motion.button>
             </div>
           </div>
           <div className="space-y-3">
