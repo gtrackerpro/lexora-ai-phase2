@@ -122,6 +122,10 @@
     @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
   }
 
+  .container-full {
+    @apply w-full px-4 sm:px-6 lg:px-8;
+  }
+
   .section-padding {
     @apply py-12 lg:py-16;
   }

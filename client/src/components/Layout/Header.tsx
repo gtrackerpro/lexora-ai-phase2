@@ -111,7 +111,7 @@ const Header: React.FC = () => {
 
   return (
     <header className="sticky top-0 z-50 bg-black-950/80 backdrop-blur-xl border-b border-dark-800/50">
-      <div className="container-fluid">
+      <div className="w-full px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16 gap-4">
           {/* Logo */}
           <Link to="/dashboard" className="flex items-center space-x-3 group">
@@ -128,7 +128,7 @@ const Header: React.FC = () => {
           </Link>
 
           {/* Search Bar */}
-          <div className="flex-1 max-w-2xl mx-8 hidden md:block">
+          <div className="flex-1 mx-8 hidden md:block">
             <div className="relative group">
               <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-dark-400 h-4 w-4 group-focus-within:text-primary-400 transition-colors" />
               <input
@@ -294,7 +294,7 @@ const Header: React.FC = () => {
             exit={{ opacity: 0, height: 0 }}
             className="lg:hidden border-t border-dark-800 bg-dark-900/95 backdrop-blur-xl"
           >
-            <div className="container-fluid py-4">
+            <div className="w-full px-4 sm:px-6 lg:px-8 py-4">
               <div className="space-y-2">
                 <Link
                   to="/dashboard" 
