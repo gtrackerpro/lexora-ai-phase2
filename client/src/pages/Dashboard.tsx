@@ -130,11 +130,11 @@ const Dashboard: React.FC = () => {
           </div>
         </div>
 
-      {/* Stats Grid */}
+      {/* Stats Grid - Simplified */}
       <div className="space-y-6">
         {analyticsLoading ? (
-          <Grid cols={4} gap="md" className="mb-8">
-            {Array.from({ length: 4 }).map((_, index) => (
+          <Grid cols={3} gap="md" className="mb-8">
+            {Array.from({ length: 3 }).map((_, index) => (
               <LoadingCard key={index} height="h-32" />
             ))}
           </Grid>
@@ -146,9 +146,9 @@ const Dashboard: React.FC = () => {
             className="py-8"
           />
         ) : statsData ? (
-          <Grid cols={4} gap="md">
+          <Grid cols={3} gap="md">
             <StatsCard
-              title="Total Learning Hours"
+              title="Learning Hours"
               value={statsData.totalHours.toString()}
               change="+2.5 this week"
               changeType="positive"
@@ -157,7 +157,7 @@ const Dashboard: React.FC = () => {
               index={0}
             />
             <StatsCard
-              title="Lessons Completed"
+              title="Completed Lessons"
               value={statsData.completedLessons.toString()}
               change="+3 this week"
               changeType="positive"
@@ -166,22 +166,13 @@ const Dashboard: React.FC = () => {
               index={1}
             />
             <StatsCard
-              title="Current Streak"
+              title="Learning Streak"
               value={`${statsData.currentStreak} days`}
               change={statsData.currentStreak > 0 ? "Keep it up!" : "Start today!"}
               changeType={statsData.currentStreak > 0 ? "positive" : "neutral"}
               icon={Zap}
               color="orange"
               index={2}
-            />
-            <StatsCard
-              title="Achievements"
-              value={statsData.achievements.toString()}
-              change="+1 this month"
-              changeType="positive"
-              icon={Award}
-              color="purple"
-              index={3}
             />
           </Grid>
         ) : null}
@@ -276,70 +267,24 @@ const Dashboard: React.FC = () => {
           
           <div className="glass-card">
             <div className="flex items-center space-x-2 mb-6">
-              <Target className="h-5 w-5 text-primary-400" />
-              <h3 className="text-lg font-semibold text-white">Quick Actions</h3>
+              <Plus className="h-5 w-5 text-primary-400" />
+              <h3 className="text-lg font-semibold text-white">Quick Start</h3>
             </div>
             <div className="space-y-3">
-              <motion.button
-                whileHover={{ scale: 1.02, x: 5 }}
+              <button
+                onClick={handleCreateNewTopic}
                 className="w-full flex items-center space-x-3 p-4 text-left hover:bg-dark-800/50 rounded-xl transition-all duration-200 group"
               >
                 <div className="p-2 rounded-lg bg-gradient-to-r from-primary-500 to-primary-600 group-hover:from-primary-400 group-hover:to-primary-500 transition-all duration-200">
-                  <Target className="h-4 w-4 text-white" />
+                  <Plus className="h-4 w-4 text-white" />
                 </div>
                 <div>
-                  <span className="text-white font-medium">Set Learning Goals</span>
-                  <p className="text-dark-400 text-sm">Define your objectives</p>
+                  <span className="text-white font-medium">Create Learning Path</span>
+                  <p className="text-dark-400 text-sm">Start a new topic</p>
                 </div>
-              </motion.button>
-              
-              <motion.button
-                whileHover={{ scale: 1.02, x: 5 }}
-                className="w-full flex items-center space-x-3 p-4 text-left hover:bg-dark-800/50 rounded-xl transition-all duration-200 group"
-              >
-                <div className="p-2 rounded-lg bg-gradient-to-r from-success-500 to-success-600 group-hover:from-success-400 group-hover:to-success-500 transition-all duration-200">
-                  <Calendar className="h-4 w-4 text-white" />
-                </div>
-                <div>
-                  <span className="text-white font-medium">Schedule Study Time</span>
-                  <p className="text-dark-400 text-sm">Plan your sessions</p>
-                </div>
-              </motion.button>
-              
-              <motion.button
-                whileHover={{ scale: 1.02, x: 5 }}
-                className="w-full flex items-center space-x-3 p-4 text-left hover:bg-dark-800/50 rounded-xl transition-all duration-200 group"
-              >
-                <div className="p-2 rounded-lg bg-gradient-to-r from-blue-500 to-blue-600 group-hover:from-blue-400 group-hover:to-blue-500 transition-all duration-200">
-                  <TrendingUp className="h-4 w-4 text-white" />
-                </div>
-                <div>
-                  <span className="text-white font-medium">View Progress Report</span>
-                  <p className="text-dark-400 text-sm">Track your growth</p>
-                </div>
-              </motion.button>
+              </button>
             </div>
           </div>
-          <div className="space-y-3">
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-dark-300">Global Learners</span>
-              <span className="text-sm font-semibold text-accent-400">2.4M+</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-dark-300">Lessons Completed Today</span>
-              <span className="text-sm font-semibold text-success-400">156K</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-dark-300">Your Rank</span>
-              <span className="text-sm font-semibold text-primary-400">#1,247</span>
-            </div>
-          </div>
-          <button className="w-full mt-4 btn-ghost py-2 text-sm">
-            <div className="flex items-center justify-center space-x-2">
-              <Globe className="h-4 w-4" />
-              <span>Join Community</span>
-            </div>
-          </button>
         </div>
       </Grid>
       </div>

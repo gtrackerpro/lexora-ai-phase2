@@ -247,15 +247,6 @@ const Header: React.FC = () => {
                         <span>Profile Settings</span>
                       </Link>
                       
-                      <Link
-                        to="/settings"
-                        className="flex items-center space-x-3 px-3 py-2.5 text-dark-300 hover:text-white hover:bg-dark-800/50 rounded-xl transition-all duration-200"
-                        onClick={() => setIsProfileOpen(false)}
-                      >
-                        <Settings className="w-4 h-4" />
-                        <span>Preferences</span>
-                      </Link>
-                      
                       <div className="border-t border-dark-800 my-2"></div>
                       
                       <button
@@ -285,7 +276,7 @@ const Header: React.FC = () => {
         </div>
       </div>
 
-      {/* Mobile Menu */}
+          {/* Mobile Menu */}
       <AnimatePresence>
         {isMobileMenuOpen && (
           <motion.div
@@ -304,18 +295,11 @@ const Header: React.FC = () => {
                   Dashboard
                 </Link>
                 <Link
-                  to="/learning"
+                  to="/create-topic"
                   className="block px-4 py-3 text-dark-300 hover:text-white hover:bg-dark-800/50 rounded-lg transition-all duration-200"
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
-                  My Learning
-                </Link>
-                <Link
-                  to="/progress"
-                  className="block px-4 py-3 text-dark-300 hover:text-white hover:bg-dark-800/50 rounded-lg transition-all duration-200"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  Progress
+                  Create Learning Path
                 </Link>
               </div>
             </div>

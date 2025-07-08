@@ -3,18 +3,8 @@ import { Link, useLocation } from 'react-router-dom';
 import {
   Home,
   BookOpen,
-  Play,
-  TrendingUp,
-  User,
-  Settings,
-  HelpCircle,
-  Star,
-  Clock,
-  Award,
   Plus,
-  Zap,
-  Target,
-  Calendar
+  Zap
 } from 'lucide-react';
 
 const Sidebar: React.FC = () => {
@@ -23,32 +13,16 @@ const Sidebar: React.FC = () => {
   const menuItems = [
     { icon: Home, label: 'Dashboard', path: '/dashboard' },
     { icon: BookOpen, label: 'My Learning', path: '/learning' },
-    { icon: Play, label: 'Continue Watching', path: '/continue' },
-    { icon: TrendingUp, label: 'Progress', path: '/progress' },
-    { icon: Star, label: 'Favorites', path: '/favorites' },
-    { icon: Clock, label: 'Recent', path: '/recent' },
-    { icon: Award, label: 'Achievements', path: '/achievements' },
+    { icon: Plus, label: 'Create Learning Path', path: '/create-topic' },
   ];
 
-  const bottomItems = [
-    { icon: User, label: 'Profile', path: '/profile' },
-    { icon: Settings, label: 'Settings', path: '/settings' },
-    { icon: HelpCircle, label: 'Help', path: '/help' },
-  ];
+  const bottomItems: any[] = [];
 
   const isActive = (path: string) => location.pathname === path;
 
   return (
     <aside className="w-64 bg-black-950/50 backdrop-blur-xl border-r border-dark-800/50 h-screen overflow-y-auto hidden lg:block">
       <div className="p-6 space-y-8">
-        {/* Create New Button */}
-        <Link
-          to="/create-topic"
-          className="w-full flex items-center justify-center space-x-3 p-3 bg-primary-600 hover:bg-primary-500 text-white font-medium rounded-lg transition-all duration-200"
-        >
-          <Plus className="w-5 h-5" />
-          <span>Create Learning Path</span>
-        </Link>
 
         {/* Main Navigation */}
         <nav className="space-y-2">
@@ -131,28 +105,6 @@ const Sidebar: React.FC = () => {
           </div>
         </div>
 
-        {/* Bottom Navigation */}
-        <div className="border-t border-dark-800 pt-4">
-          <nav className="space-y-2">
-            <h3 className="text-xs font-semibold text-dark-400 uppercase tracking-wider px-3 mb-4">
-              Account
-            </h3>
-            {bottomItems.map((item, index) => (
-              <Link
-                key={item.path}
-                to={item.path}
-                className={`flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-all duration-200 ${
-                  isActive(item.path)
-                    ? 'bg-dark-800/80 text-white'
-                    : 'text-dark-400 hover:text-white hover:bg-dark-800/50'
-                }`}
-              >
-                <item.icon className="w-5 h-5" />
-                <span className="font-medium">{item.label}</span>
-              </Link>
-            ))}
-          </nav>
-        </div>
       </div>
     </aside>
   );
