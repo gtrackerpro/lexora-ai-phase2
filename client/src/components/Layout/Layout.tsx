@@ -11,16 +11,14 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   const location = useLocation();
   
   return (
-    <div className="min-h-screen bg-dark-950 flex flex-col">
+    <div className="min-h-screen bg-dark-950">
       <Header />
-      <div className="flex flex-1 overflow-hidden">
-        <Sidebar />
-        <main className="flex-1 overflow-auto p-6">
-          <div className="w-full">
-            {children}
-          </div>
-        </main>
-      </div>
+      <Sidebar />
+      <main className="lg:ml-64 overflow-auto p-4 md:p-6 pt-20 min-h-screen">
+        <div className="w-full">
+          {children}
+        </div>
+      </main>
     </div>
   );
 };

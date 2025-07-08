@@ -198,27 +198,42 @@ const Dashboard: React.FC = () => {
           <RecentActivity />
           
           {/* Learning Streak */}
-          {/* Temporarily using a simpler component until API is ready */}
           <div className="glass-card">
             <div className="flex items-center space-x-2 mb-6">
               <Zap className="h-5 w-5 text-primary-400" />
               <h3 className="text-lg font-semibold text-white">Learning Streak</h3>
             </div>
-            <div className="text-center mb-4">
-              <div className="text-4xl font-bold text-primary-400 mb-2">15</div>
-              <p className="text-dark-300">days in a row</p>
-            </div>
-            <div className="flex justify-center space-x-1 mb-4">
-              {[...Array(7)].map((_, i) => (
-                <div
-                  key={i}
-                  className={`w-3 h-3 rounded-full ${
-                    i < 5 ? 'bg-primary-500' : 'bg-dark-700'
-                  }`}
-                />
-              ))}
-            </div>
-            <p className="text-center text-primary-400 text-sm">Keep it up! 🔥</p>
+            {analyticsLoading ? (
+              <LoadingCard height="h-32" />
+            ) : analyticsError ? (
+              <div className="text-center py-8">
+                <p className="text-dark-400 text-sm">Unable to load streak data</p>
+              </div>
+            ) : (
+              <>
+                <div className="text-center mb-4">
+                  <div className="text-4xl font-bold text-primary-400 mb-2">
+                    {statsData?.currentStreak || 0}
+                  </div>
+                  <p className="text-dark-300">days in a row</p>
+                </div>
+                <div className="flex justify-center space-x-1 mb-4">
+                  {[...Array(7)].map((_, i) => (
+                    <div
+                      key={i}
+                      className={`w-3 h-3 rounded-full ${
+                        i < (statsData?.currentStreak || 0) && (statsData?.currentStreak || 0) > 0 
+                          ? 'bg-primary-500' 
+                          : 'bg-dark-700'
+                      }`}
+                    />
+                  ))}
+                </div>
+                <p className="text-center text-primary-400 text-sm">
+                  {(statsData?.currentStreak || 0) > 0 ? 'Keep it up! 🔥' : 'Start your streak today! 🌟'}
+                </p>
+              </>
+            )}
           </div>
           
           <div className="glass-card">
