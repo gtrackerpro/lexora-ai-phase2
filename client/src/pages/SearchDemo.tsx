@@ -18,6 +18,7 @@ import Layout from '../components/Layout/Layout';
 import SearchModal from '../components/Search/SearchModal';
 import NotificationPanel from '../components/Notification/NotificationCenter';
 import { ToastContainer, useToast } from '../components/Notification/Toast';
+import { useNotifications } from '../hooks';
 import { topicsAPI } from '../services/api';
 
 const SearchDemo: React.FC = () => {
@@ -27,41 +28,13 @@ const SearchDemo: React.FC = () => {
   const [isCreatingTestData, setIsCreatingTestData] = useState(false);
   const toast = useToast();
 
-  // Mock notifications for demo
-  const [notifications, setNotifications] = useState([
-    {
-      id: '1',
-      type: 'achievement' as const,
-      title: '🎉 Achievement Unlocked!',
-      message: 'You completed the Python Basics course!',
-      timestamp: new Date(Date.now() - 5 * 60 * 1000),
-      read: false
-    },
-    {
-      id: '2',
-      type: 'lesson' as const,
-      title: '📚 New Lesson Available',
-      message: 'Advanced React Hooks is ready for you',
-      timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000),
-      read: false
-    },
-    {
-      id: '3',
-      type: 'reminder' as const,
-      title: '⏰ Study Reminder',
-      message: 'Keep your 7-day streak going!',
-      timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000),
-      read: true
-    },
-    {
-      id: '4',
-      type: 'info' as const,
-      title: '💡 Pro Tip',
-      message: 'Use the search feature to quickly find lessons',
-      timestamp: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
-      read: true
-    }
-  ]);
+  // Use real notifications API
+  const { 
+    notifications, 
+    unreadCount, 
+    markAsRead, 
+    markAllAsRead 
+  } = useNotifications();
 
   const handleSearchSelect = (result: any) => {
     toast.success(`Opening: ${result.title}`, `Navigate to ${result.type} page`);
@@ -73,19 +46,7 @@ const SearchDemo: React.FC = () => {
     console.log('Clicked notification:', notification);
   };
 
-  const handleMarkAsRead = (id: string) => {
-    setNotifications(prev => 
-      prev.map(notif => 
-        notif.id === id ? { ...notif, read: true } : notif
-      )
-    );
-  };
-
-  const handleMarkAllAsRead = () => {
-    setNotifications(prev => 
-      prev.map(notif => ({ ...notif, read: true }))
-    );
-  };
+  // Notification handlers are now provided by the hook
 
   const createTestData = async () => {
     setIsCreatingTestData(true);
@@ -150,7 +111,7 @@ const SearchDemo: React.FC = () => {
     setTimeout(() => toast.info('Info!', 'This is an info message'), 3000);
   };
 
-  const unreadCount = notifications.filter(n => !n.read).length;
+  // unreadCount is now provided by the hook
 
   return (
     <Layout>
@@ -231,8 +192,8 @@ const SearchDemo: React.FC = () => {
                 isOpen={isNotificationOpen}
                 onClose={() => setIsNotificationOpen(false)}
                 notifications={notifications}
-                onMarkAsRead={handleMarkAsRead}
-                onMarkAllAsRead={handleMarkAllAsRead}
+                onMarkAsRead={markAsRead}
+                onMarkAllAsRead={markAllAsRead}
                 onNotificationClick={handleNotificationClick}
               />
             )}

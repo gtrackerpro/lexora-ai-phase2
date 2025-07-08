@@ -21,6 +21,7 @@ import progressRoutes from './routes/progress';
 import assetRoutes from './routes/assets';
 import userRoutes from './routes/users';
 import searchRoutes from './routes/search';
+import notificationRoutes from './routes/notifications';
 
 // Connect to database
 connectDB();
@@ -62,6 +63,7 @@ app.use('/api/videos', videoRoutes);
 app.use('/api/progress', progressRoutes);
 app.use('/api/assets', assetRoutes);
 app.use('/api/search', searchRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

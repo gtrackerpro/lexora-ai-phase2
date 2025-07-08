@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-// import { useTopics, useProgressAnalytics } from '../hooks';
+import { useTopics, useProgressAnalytics } from '../hooks';
 import {
   BookOpen,
   Clock,
@@ -29,55 +29,15 @@ const Dashboard: React.FC = () => {
   const navigate = useNavigate();
 
   // Fetch real data using custom hooks
-  // Temporarily use mock data until API endpoints are implemented
-  const topicsLoading = false;
-  const topicsError = null;
-  const analyticsLoading = false;
-  const analyticsError = null;
+  const { data: topics, isLoading: topicsLoading, error: topicsError, refetch: refetchTopics } = useTopics();
+  const { data: analytics, isLoading: analyticsLoading, error: analyticsError } = useProgressAnalytics();
   
-  // Mock data for demonstration
-  const topics = [
-    {
-      _id: '1',
-      title: 'Python Programming Masterclass',
-      description: 'Learn Python from scratch to advanced concepts with hands-on projects and real-world applications.',
-      tags: ['python', 'programming', 'beginner'],
-      createdBy: 'user123',
-      createdAt: '2023-01-01'
-    },
-    {
-      _id: '2',
-      title: 'Web Development Fundamentals',
-      description: 'Master HTML, CSS, and JavaScript to build modern, responsive websites from the ground up.',
-      tags: ['web', 'html', 'css', 'javascript'],
-      createdBy: 'user123',
-      createdAt: '2023-01-02'
-    },
-    {
-      _id: '3',
-      title: 'Data Science with Python',
-      description: 'Dive into data analysis, visualization, and machine learning using Python and popular libraries.',
-      tags: ['data science', 'python', 'machine learning'],
-      createdBy: 'user123',
-      createdAt: '2023-01-03'
-    },
-    {
-      _id: '4',
-      title: 'Machine Learning Fundamentals',
-      description: 'Understand the core concepts of machine learning and build your first AI models.',
-      tags: ['machine learning', 'ai', 'python'],
-      createdBy: 'user123',
-      createdAt: '2023-01-04'
-    }
-  ];
-  
-  // Mock analytics data
-  const statsData = {
-    totalHours: 127.5,
-    completedLessons: 89,
-    currentStreak: 15,
-    achievements: 24
-  };
+  const statsData = analytics ? {
+    totalHours: analytics.totalHours || 0,
+    completedLessons: analytics.completedLessons || 0,
+    currentStreak: analytics.currentStreak || 0,
+    achievements: analytics.achievements || 0
+  } : null;
 
   const handleCreateNewTopic = () => {
     navigate('/create-topic');
@@ -87,10 +47,6 @@ const Dashboard: React.FC = () => {
     navigate(`/learning/${topicId}`);
   };
 
-  const refetchTopics = () => {
-    // This would normally trigger a data refetch
-    console.log('Refetching topics...');
-  };
 
   return (
     <Layout>

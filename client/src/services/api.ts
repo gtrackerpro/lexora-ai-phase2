@@ -332,3 +332,21 @@ export const searchAPI = {
     return response.data;
   },
 };
+
+// Notifications API
+export const notificationsAPI = {
+  getAll: async (): Promise<{ success: boolean; notifications: any[] }> => {
+    const response = await api.get('/notifications');
+    return response.data;
+  },
+
+  markAsRead: async (id: string): Promise<{ success: boolean; notification: any }> => {
+    const response = await api.put(`/notifications/${id}/read`);
+    return response.data;
+  },
+
+  markAllAsRead: async (): Promise<{ success: boolean }> => {
+    const response = await api.put('/notifications/markAllRead');
+    return response.data;
+  },
+};

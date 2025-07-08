@@ -11,32 +11,9 @@ interface ActivityItem {
 }
 
 const SimplifiedRecentActivity: React.FC = () => {
-  // Mock data - replace with real data from API
-  const activities: ActivityItem[] = [
-    {
-      id: '1',
-      type: 'lesson_completed',
-      title: 'Python Basics - Variables',
-      description: 'Completed lesson on Python variables and data types',
-      timestamp: '2 hours ago',
-      progress: 100
-    },
-    {
-      id: '2',
-      type: 'video_watched',
-      title: 'Introduction to Functions',
-      description: 'Watched 85% of the lesson video',
-      timestamp: '5 hours ago',
-      progress: 85
-    },
-    {
-      id: '3',
-      type: 'topic_created',
-      title: 'Machine Learning Fundamentals',
-      description: 'Created new learning topic',
-      timestamp: '1 day ago'
-    }
-  ];
+  // TODO: Replace with real API call to fetch user activity
+  // For now, showing empty state until activity API is implemented
+  const activities: ActivityItem[] = [];
 
   const getActivityIcon = (type: ActivityItem['type']) => {
     switch (type) {

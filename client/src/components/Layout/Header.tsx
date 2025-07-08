@@ -13,37 +13,12 @@ import {
   ChevronDown
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
+import { useNotifications } from '../../hooks';
 import SearchModal from '../Search/SearchModal';
 import NotificationPanel from '../Notification/NotificationCenter';
 import toast from 'react-hot-toast';
 
-// Mock notification data
-const mockNotifications = [
-  {
-    id: '1',
-    type: 'achievement' as const,
-    title: 'Congratulations!',
-    message: 'You completed the Machine Learning Basics course',
-    timestamp: new Date(Date.now() - 10 * 60 * 1000),
-    read: false
-  },
-  {
-    id: '2',
-    type: 'lesson' as const,
-    title: 'New lesson available',
-    message: 'Neural Networks Deep Dive is now ready for you',
-    timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000),
-    read: false
-  },
-  {
-    id: '3',
-    type: 'reminder' as const,
-    title: 'Daily streak reminder',
-    message: 'Keep your 5-day learning streak going!',
-    timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000),
-    read: true
-  }
-];
+// TODO: Replace with real notifications API
 
 const Header: React.FC = () => {
   const { user, logout } = useAuth();
@@ -52,7 +27,15 @@ const Header: React.FC = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
-  const [notifications, setNotifications] = useState(mockNotifications);
+  // Use real notifications API
+  const { 
+    notifications, 
+    unreadCount: notificationUnreadCount, 
+    isLoading: notificationsLoading, 
+    error: notificationsError,
+    markAsRead,
+    markAllAsRead
+  } = useNotifications();
 
   const handleLogout = () => {
     logout();
@@ -90,24 +73,15 @@ const Header: React.FC = () => {
 
   const handleNotificationClick = (notification: any) => {
     console.log('Clicked notification:', notification);
-    // Handle notification click action
+    // Mark as read when clicked
+    if (!notification.read) {
+      markAsRead(notification._id);
+    }
+    // Handle notification click action based on type/data
+    if (notification.data?.path) {
+      navigate(notification.data.path);
+    }
   };
-
-  const handleMarkAsRead = (id: string) => {
-    setNotifications(prev => 
-      prev.map(notif => 
-        notif.id === id ? { ...notif, read: true } : notif
-      )
-    );
-  };
-
-  const handleMarkAllAsRead = () => {
-    setNotifications(prev => 
-      prev.map(notif => ({ ...notif, read: true }))
-    );
-  };
-
-  const unreadCount = notifications.filter(n => !n.read).length;
 
   return (
     <header className="sticky top-0 z-50 bg-black-950/80 backdrop-blur-xl border-b border-dark-800/50">
@@ -146,9 +120,9 @@ const Header: React.FC = () => {
                 className="relative p-2.5 text-dark-400 hover:text-white hover:bg-dark-800/50 rounded-lg transition-all duration-200"
               >
                 <Bell className="h-5 w-5" />
-                {unreadCount > 0 && (
+                {notificationUnreadCount > 0 && (
                   <span className="absolute -top-1 -right-1 w-3 h-3 bg-gradient-to-r from-error-500 to-error-600 rounded-full border-2 border-black-950 animate-pulse">
-                    <span className="sr-only">{unreadCount} unread notifications</span>
+                    <span className="sr-only">{notificationUnreadCount} unread notifications</span>
                   </span>
                 )}
               </button>
@@ -157,9 +131,11 @@ const Header: React.FC = () => {
                 isOpen={isNotificationOpen}
                 onClose={() => setIsNotificationOpen(false)}
                 notifications={notifications}
-                onMarkAsRead={handleMarkAsRead}
-                onMarkAllAsRead={handleMarkAllAsRead}
+                onMarkAsRead={markAsRead}
+                onMarkAllAsRead={markAllAsRead}
                 onNotificationClick={handleNotificationClick}
+                isLoading={notificationsLoading}
+                error={notificationsError}
               />
             </div>
 
