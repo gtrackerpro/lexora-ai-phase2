@@ -127,27 +127,14 @@ const Header: React.FC = () => {
             </span>
           </Link>
 
-          {/* Search Bar */}
-          <div className="flex-1 mx-8 hidden md:block">
-            <div className="relative group">
-              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-dark-400 h-4 w-4 group-focus-within:text-primary-400 transition-colors" />
-              <input
-                type="text"
-                placeholder="Search topics, lessons, or anything..."
-                className="w-full pl-12 pr-4 py-3 bg-dark-900/50 backdrop-blur-sm border border-dark-700 rounded-2xl text-white placeholder-dark-400 focus:outline-none focus:ring-2 focus:ring-primary-500/50 focus:border-primary-500/50 transition-all duration-200 hover:border-dark-600 cursor-pointer"
-                onClick={() => setIsSearchOpen(true)}
-                readOnly
-              />
-              <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-primary-500/10 to-accent-500/10 opacity-0 group-focus-within:opacity-100 transition-opacity pointer-events-none"></div>
-            </div>
-          </div>
 
           {/* Right Side */}
           <div className="flex items-center space-x-3">
-            {/* Mobile Search */}
+            {/* Search Icon */}
             <button 
               onClick={() => setIsSearchOpen(true)}
-              className="p-2.5 text-dark-400 hover:text-white hover:bg-dark-800/50 rounded-lg transition-all duration-200 md:hidden"
+              className="p-2.5 text-dark-400 hover:text-white hover:bg-dark-800/50 rounded-lg transition-all duration-200"
+              title="Search"
             >
               <Search className="h-5 w-5" />
             </button>
@@ -244,7 +231,7 @@ const Header: React.FC = () => {
                         onClick={() => setIsProfileOpen(false)}
                       >
                         <User className="w-4 h-4" />
-                        <span>Profile Settings</span>
+                        <span>Profile</span>
                       </Link>
                       
                       <div className="border-t border-dark-800 my-2"></div>
