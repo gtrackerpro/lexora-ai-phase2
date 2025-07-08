@@ -293,3 +293,42 @@ export const assetsAPI = {
     return response.data;
   },
 };
+
+// Search API
+export const searchAPI = {
+  searchAll: async (query: string, filters?: {
+    type?: 'topic' | 'lesson' | 'video' | 'path';
+    difficulty?: 'beginner' | 'intermediate' | 'advanced';
+    tags?: string[];
+  }): Promise<{ success: boolean; results: any[]; count: number }> => {
+    const params = new URLSearchParams();
+    params.append('q', query);
+    
+    if (filters?.type) params.append('type', filters.type);
+    if (filters?.difficulty) params.append('difficulty', filters.difficulty);
+    if (filters?.tags?.length) params.append('tags', filters.tags.join(','));
+    
+    const response = await api.get(`/search?${params.toString()}`);
+    return response.data;
+  },
+  
+  searchTopics: async (query: string): Promise<{ success: boolean; topics: any[]; count: number }> => {
+    const response = await api.get(`/topics/search?q=${encodeURIComponent(query)}`);
+    return response.data;
+  },
+  
+  searchLessons: async (query: string): Promise<{ success: boolean; lessons: any[]; count: number }> => {
+    const response = await api.get(`/lessons/search?q=${encodeURIComponent(query)}`);
+    return response.data;
+  },
+  
+  getRecentSearches: async (): Promise<{ success: boolean; searches: string[] }> => {
+    const response = await api.get('/search/recent');
+    return response.data;
+  },
+  
+  saveSearch: async (query: string): Promise<{ success: boolean }> => {
+    const response = await api.post('/search/recent', { query });
+    return response.data;
+  },
+};

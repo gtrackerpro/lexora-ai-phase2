@@ -20,6 +20,7 @@ import videoRoutes from './routes/videos';
 import progressRoutes from './routes/progress';
 import assetRoutes from './routes/assets';
 import userRoutes from './routes/users';
+import searchRoutes from './routes/search';
 
 // Connect to database
 connectDB();
@@ -60,6 +61,7 @@ app.use('/api/lessons', lessonRoutes);
 app.use('/api/videos', videoRoutes);
 app.use('/api/progress', progressRoutes);
 app.use('/api/assets', assetRoutes);
+app.use('/api/search', searchRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

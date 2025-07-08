@@ -13,22 +13,106 @@ import {
   ChevronDown
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
+import SearchModal from '../Search/SearchModal';
+import NotificationPanel from '../Notification/NotificationCenter';
+import toast from 'react-hot-toast';
+
+// Mock notification data
+const mockNotifications = [
+  {
+    id: '1',
+    type: 'achievement' as const,
+    title: 'Congratulations!',
+    message: 'You completed the Machine Learning Basics course',
+    timestamp: new Date(Date.now() - 10 * 60 * 1000),
+    read: false
+  },
+  {
+    id: '2',
+    type: 'lesson' as const,
+    title: 'New lesson available',
+    message: 'Neural Networks Deep Dive is now ready for you',
+    timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000),
+    read: false
+  },
+  {
+    id: '3',
+    type: 'reminder' as const,
+    title: 'Daily streak reminder',
+    message: 'Keep your 5-day learning streak going!',
+    timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000),
+    read: true
+  }
+];
 
 const Header: React.FC = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isNotificationOpen, setIsNotificationOpen] = useState(false);
+  const [notifications, setNotifications] = useState(mockNotifications);
 
   const handleLogout = () => {
     logout();
     navigate('/login');
   };
 
+  const handleSearchSelect = (result: any) => {
+    console.log('Selected search result:', result);
+    
+    // Navigate based on result type
+    switch (result.type) {
+      case 'topic':
+        navigate(`/learning/${result.id}`);
+        break;
+      case 'lesson':
+        navigate(`/lessons/${result.id}`);
+        break;
+      case 'video':
+        navigate(`/lessons/${result.lessonId || result.id}`);
+        break;
+      case 'path':
+        navigate(`/learning/${result.topicId || result.id}`);
+        break;
+      default:
+        console.warn('Unknown result type:', result.type);
+    }
+    
+    // Show success toast
+    if (typeof window !== 'undefined' && window.location.pathname.includes(result.id)) {
+      // Already on the page
+    } else {
+      toast.success(`Opening ${result.title}`);
+    }
+  };
+
+  const handleNotificationClick = (notification: any) => {
+    console.log('Clicked notification:', notification);
+    // Handle notification click action
+  };
+
+  const handleMarkAsRead = (id: string) => {
+    setNotifications(prev => 
+      prev.map(notif => 
+        notif.id === id ? { ...notif, read: true } : notif
+      )
+    );
+  };
+
+  const handleMarkAllAsRead = () => {
+    setNotifications(prev => 
+      prev.map(notif => ({ ...notif, read: true }))
+    );
+  };
+
+  const unreadCount = notifications.filter(n => !n.read).length;
+
   return (
     <header className="sticky top-0 z-50 bg-black-950/80 backdrop-blur-xl border-b border-dark-800/50">
       <div className="container-fluid">
-        <div className="flex justify-between items-center h-16">
+        <div className="flex items-center justify-between h-16 gap-4">
           {/* Logo */}
           <Link to="/dashboard" className="flex items-center space-x-3 group">
             <div className="relative p-1 rounded-xl">
@@ -50,7 +134,9 @@ const Header: React.FC = () => {
               <input
                 type="text"
                 placeholder="Search topics, lessons, or anything..."
-                className="w-full pl-12 pr-4 py-3 bg-dark-900/50 backdrop-blur-sm border border-dark-700 rounded-2xl text-white placeholder-dark-400 focus:outline-none focus:ring-2 focus:ring-primary-500/50 focus:border-primary-500/50 transition-all duration-200 hover:border-dark-600"
+                className="w-full pl-12 pr-4 py-3 bg-dark-900/50 backdrop-blur-sm border border-dark-700 rounded-2xl text-white placeholder-dark-400 focus:outline-none focus:ring-2 focus:ring-primary-500/50 focus:border-primary-500/50 transition-all duration-200 hover:border-dark-600 cursor-pointer"
+                onClick={() => setIsSearchOpen(true)}
+                readOnly
               />
               <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-primary-500/10 to-accent-500/10 opacity-0 group-focus-within:opacity-100 transition-opacity pointer-events-none"></div>
             </div>
@@ -59,15 +145,36 @@ const Header: React.FC = () => {
           {/* Right Side */}
           <div className="flex items-center space-x-3">
             {/* Mobile Search */}
-            <button className="p-2.5 text-dark-400 hover:text-white hover:bg-dark-800/50 rounded-lg transition-all duration-200 md:hidden">
+            <button 
+              onClick={() => setIsSearchOpen(true)}
+              className="p-2.5 text-dark-400 hover:text-white hover:bg-dark-800/50 rounded-lg transition-all duration-200 md:hidden"
+            >
               <Search className="h-5 w-5" />
             </button>
 
             {/* Notifications */}
-            <button className="relative p-2.5 text-dark-400 hover:text-white hover:bg-dark-800/50 rounded-lg transition-all duration-200">
-              <Bell className="h-5 w-5" />
-              <span className="absolute -top-1 -right-1 w-3 h-3 bg-gradient-to-r from-error-500 to-error-600 rounded-full border-2 border-black-950 animate-pulse"></span>
-            </button>
+            <div className="relative">
+              <button 
+                onClick={() => setIsNotificationOpen(!isNotificationOpen)}
+                className="relative p-2.5 text-dark-400 hover:text-white hover:bg-dark-800/50 rounded-lg transition-all duration-200"
+              >
+                <Bell className="h-5 w-5" />
+                {unreadCount > 0 && (
+                  <span className="absolute -top-1 -right-1 w-3 h-3 bg-gradient-to-r from-error-500 to-error-600 rounded-full border-2 border-black-950 animate-pulse">
+                    <span className="sr-only">{unreadCount} unread notifications</span>
+                  </span>
+                )}
+              </button>
+              
+              <NotificationPanel
+                isOpen={isNotificationOpen}
+                onClose={() => setIsNotificationOpen(false)}
+                notifications={notifications}
+                onMarkAsRead={handleMarkAsRead}
+                onMarkAllAsRead={handleMarkAllAsRead}
+                onNotificationClick={handleNotificationClick}
+              />
+            </div>
 
             {/* Profile Dropdown */}
             <div className="relative">
@@ -215,6 +322,13 @@ const Header: React.FC = () => {
           </motion.div>
         )}
       </AnimatePresence>
+      
+      {/* Search Modal */}
+      <SearchModal 
+        isOpen={isSearchOpen}
+        onClose={() => setIsSearchOpen(false)}
+        onSelect={handleSearchSelect}
+      />
     </header>
   );
 };

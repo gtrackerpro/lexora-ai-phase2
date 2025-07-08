@@ -3,6 +3,7 @@ import Topic from '../models/Topic';
 import LearningPath from '../models/LearningPath';
 import groqService from '../services/groqService';
 import lessonGenerationService from '../services/lessonGenerationService';
+import { createSearchRegex, parsePaginationParams, formatSearchResults } from '../utils/helpers';
 
 // @desc    Create new topic with AI-generated learning path
 // @route   POST /api/topics
@@ -236,6 +237,69 @@ export const deleteTopic = async (req: Request, res: Response) => {
     res.status(500).json({
       success: false,
       message: 'Failed to delete topic'
+    });
+  }
+};
+
+// @desc    Search topics
+// @route   GET /api/topics/search
+// @access  Private
+export const searchTopics = async (req: Request, res: Response) => {
+  try {
+    const { q: query, tags, difficulty } = req.query;
+    const { page, limit, skip } = parsePaginationParams(req);
+
+    if (!query || typeof query !== 'string') {
+      return res.status(400).json({
+        success: false,
+        message: 'Search query is required'
+      });
+    }
+
+    // Build search conditions
+    const searchRegex = createSearchRegex(query);
+    const searchConditions: any = {
+      createdBy: req.user?._id,
+      $or: [
+        { title: { $regex: searchRegex } },
+        { description: { $regex: searchRegex } },
+        { tags: { $in: [searchRegex] } }
+      ]
+    };
+
+    // Add filters
+    if (tags && typeof tags === 'string') {
+      const tagArray = tags.split(',').map(tag => tag.trim());
+      searchConditions.tags = { $in: tagArray };
+    }
+
+    if (difficulty && typeof difficulty === 'string') {
+      searchConditions.difficulty = difficulty;
+    }
+
+    // Execute search with pagination
+    const [topics, total] = await Promise.all([
+      Topic.find(searchConditions)
+        .populate('createdBy', 'displayName')
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit),
+      Topic.countDocuments(searchConditions)
+    ]);
+
+    res.status(200).json({
+      success: true,
+      count: topics.length,
+      total,
+      page,
+      pages: Math.ceil(total / limit),
+      topics
+    });
+  } catch (error) {
+    console.error('Search Topics Error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to search topics'
     });
   }
 };

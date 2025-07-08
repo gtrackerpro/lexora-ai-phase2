@@ -4,7 +4,8 @@ import {
   getTopics, 
   getTopic, 
   updateTopic, 
-  deleteTopic 
+  deleteTopic,
+  searchTopics
 } from '../controllers/topicController';
 import { protect } from '../middleware/auth';
 
@@ -15,6 +16,9 @@ router.use(protect); // All routes are protected
 router.route('/')
   .post(createTopic)
   .get(getTopics);
+
+router.route('/search')
+  .get(searchTopics);
 
 router.route('/:id')
   .get(getTopic)

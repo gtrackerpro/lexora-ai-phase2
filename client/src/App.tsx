@@ -12,6 +12,7 @@ import CreateTopic from './pages/CreateTopic';
 import LearningPath from './pages/LearningPath';
 import LessonViewer from './pages/LessonViewer';
 import ProfileSettings from './pages/ProfileSettings';
+import SearchDemo from './pages/SearchDemo';
 import { analytics } from './utils/analytics';
 import { performanceMonitor } from './utils/performance';
 
@@ -73,6 +74,14 @@ function App() {
                 element={
                   <ProtectedRoute>
                     <ProfileSettings />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/demo"
+                element={
+                  <ProtectedRoute>
+                    <SearchDemo />
                   </ProtectedRoute>
                 }
               />
