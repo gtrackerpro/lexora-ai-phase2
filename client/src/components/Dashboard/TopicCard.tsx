@@ -46,9 +46,9 @@ const TopicCard: React.FC<TopicCardProps> = ({
     <div className="group relative overflow-hidden">
       
       {/* Card */}
-      <div className="relative bg-dark-900/80 border border-dark-800 rounded-lg p-4 hover:border-dark-700 transition-all duration-200 h-full">
+      <div className="relative bg-dark-900/80 border border-dark-800 rounded-lg p-3 sm:p-4 lg:p-6 hover:border-dark-700 transition-all duration-200 h-full">
         {/* Thumbnail */}
-        <div className="relative h-40 bg-dark-800 rounded-lg mb-4 overflow-hidden">
+        <div className="relative h-32 sm:h-40 lg:h-44 bg-dark-800 rounded-lg mb-3 sm:mb-4 overflow-hidden">
           {thumbnail ? (
             <img src={thumbnail} alt={title} className="w-full h-full object-cover" />
           ) : (
@@ -87,12 +87,12 @@ const TopicCard: React.FC<TopicCardProps> = ({
         </div>
 
         {/* Content */}
-        <div className="space-y-4">
+        <div className="space-y-3 sm:space-y-4">
           <div>
-            <h3 className="text-lg font-bold text-white line-clamp-2">
+            <h3 className="text-base sm:text-lg lg:text-xl font-bold text-white line-clamp-2">
               {title}
             </h3>
-            <p className="text-dark-300 text-sm mt-2 line-clamp-2">{description}</p>
+            <p className="text-dark-300 text-xs sm:text-sm mt-2 line-clamp-2">{description}</p>
           </div>
 
           {/* Progress Bar */}
@@ -109,13 +109,13 @@ const TopicCard: React.FC<TopicCardProps> = ({
           </div>
 
           {/* Stats */}
-          <div className="grid grid-cols-2 gap-4 text-sm">
-            <div className="flex items-center space-x-2 text-dark-400">
-              <BookOpen className="h-4 w-4" />
+          <div className="grid grid-cols-2 gap-3 sm:gap-4 text-xs sm:text-sm">
+            <div className="flex items-center space-x-1 sm:space-x-2 text-dark-400">
+              <BookOpen className="h-3 w-3 sm:h-4 sm:w-4" />
               <span>{completedLessons}/{totalLessons} lessons</span>
             </div>
-            <div className="flex items-center space-x-2 text-dark-400">
-              <Clock className="h-4 w-4" />
+            <div className="flex items-center space-x-1 sm:space-x-2 text-dark-400">
+              <Clock className="h-3 w-3 sm:h-4 sm:w-4" />
               <span>{estimatedTime}</span>
             </div>
           </div>

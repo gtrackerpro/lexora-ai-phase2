@@ -8,8 +8,6 @@ import {
   Settings,
   Bell,
   Search,
-  Menu,
-  X,
   ChevronDown
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
@@ -24,7 +22,6 @@ const Header: React.FC = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   // Use real notifications API
@@ -228,47 +225,10 @@ const Header: React.FC = () => {
               </AnimatePresence>
             </div>
 
-            {/* Mobile Menu Toggle */}
-            <button 
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="p-2.5 text-dark-400 hover:text-white hover:bg-dark-800/50 rounded-lg transition-all duration-200 lg:hidden"
-            >
-              {isMobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-            </button>
           </div>
         </div>
       </div>
 
-          {/* Mobile Menu */}
-      <AnimatePresence>
-        {isMobileMenuOpen && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            className="lg:hidden border-t border-dark-800 bg-dark-900/95 backdrop-blur-xl"
-          >
-            <div className="w-full px-4 sm:px-6 lg:px-8 py-4">
-              <div className="space-y-2">
-                <Link
-                  to="/dashboard" 
-                  className="block px-4 py-3 text-dark-300 hover:text-white hover:bg-dark-800/50 rounded-lg transition-all duration-200"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  Dashboard
-                </Link>
-                <Link
-                  to="/create-topic"
-                  className="block px-4 py-3 text-dark-300 hover:text-white hover:bg-dark-800/50 rounded-lg transition-all duration-200"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  Create Learning Path
-                </Link>
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
       
       {/* Search Modal */}
       <SearchModal 

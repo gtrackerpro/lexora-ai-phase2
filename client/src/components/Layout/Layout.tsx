@@ -14,7 +14,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     <div className="min-h-screen bg-dark-950">
       <Header />
       <Sidebar />
-      <main className="lg:ml-64 overflow-auto p-4 md:p-6 pt-20 min-h-screen">
+      <main className="ml-16 sm:ml-20 md:ml-24 lg:ml-64 overflow-auto p-4 md:p-6 pt-20 min-h-screen">
         <div className="w-full">
           {children}
         </div>

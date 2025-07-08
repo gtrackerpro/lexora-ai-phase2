@@ -51,10 +51,32 @@ const LearningPath: React.FC = () => {
       if (!id) return;
 
       try {
-        const [pathResponse, lessonsResponse] = await Promise.all([
-          learningPathsAPI.getById(id),
-          lessonsAPI.getByPath(id)
-        ]);
+        // First try to get the learning path directly
+        let pathResponse, lessonsResponse;
+        
+        try {
+          [pathResponse, lessonsResponse] = await Promise.all([
+            learningPathsAPI.getById(id),
+            lessonsAPI.getByPath(id)
+          ]);
+        } catch (directError) {
+          // If that fails, it might be a topic ID instead of learning path ID
+          console.log('Direct fetch failed, trying as topic ID:', directError);
+          
+          // Try to get learning paths for this topic ID
+          const topicPathsResponse = await learningPathsAPI.getByTopic(id);
+          
+          if (topicPathsResponse.success && topicPathsResponse.learningPaths && topicPathsResponse.learningPaths.length > 0) {
+            // Use the first learning path found for this topic
+            const firstLearningPath = topicPathsResponse.learningPaths[0];
+            
+            // Redirect to the correct learning path URL
+            navigate(`/learning/${firstLearningPath._id}`, { replace: true });
+            return;
+          } else {
+            throw new Error('No learning path found for this topic');
+          }
+        }
 
         if (pathResponse.success) {
           setLearningPath(pathResponse.learningPath);
@@ -72,7 +94,7 @@ const LearningPath: React.FC = () => {
     };
 
     fetchData();
-  }, [id]);
+  }, [id, navigate]);
 
   const handleLessonClick = (lessonId: string) => {
     navigate(`/lessons/${lessonId}`);

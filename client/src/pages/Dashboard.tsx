@@ -2,6 +2,8 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useTopics, useProgressAnalytics } from '../hooks';
+import { learningPathsAPI } from '../services/api';
+import toast from 'react-hot-toast';
 import {
   BookOpen,
   Clock,
@@ -43,8 +45,23 @@ const Dashboard: React.FC = () => {
     navigate('/create-topic');
   };
 
-  const handleContinueTopic = (topicId: string) => {
-    navigate(`/learning/${topicId}`);
+  const handleContinueTopic = async (topicId: string) => {
+    try {
+      // First check if there's a learning path for this topic
+      const response = await learningPathsAPI.getByTopic(topicId);
+      
+      if (response.success && response.learningPaths && response.learningPaths.length > 0) {
+        // Navigate to the first (most recent) learning path for this topic
+        navigate(`/learning/${response.learningPaths[0]._id}`);
+      } else {
+        // No learning path exists yet, navigate to create one
+        toast.error('No learning path found for this topic. Please create one first.');
+        navigate('/create-topic');
+      }
+    } catch (error) {
+      console.error('Error finding learning path:', error);
+      toast.error('Failed to access learning path');
+    }
   };
 
 
@@ -53,33 +70,33 @@ const Dashboard: React.FC = () => {
       <div className="space-y-8 pb-8">
         {/* Hero Section */}
         <div className="relative overflow-hidden rounded-xl bg-dark-900 border border-dark-800">
-          <div className="p-6 lg:p-8">
-            <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
-              <div className="space-y-3">
+          <div className="p-4 sm:p-6 lg:p-8">
+            <div className="flex flex-col xl:flex-row items-start xl:items-center justify-between gap-4 xl:gap-6">
+              <div className="space-y-3 flex-1">
                 <div className="flex items-center space-x-2">
                   <img 
                     src="/lexora-logo.png" 
                     alt="Lexora" 
-                    className="h-6 w-6 object-contain"
+                    className="h-5 w-5 sm:h-6 sm:w-6 object-contain"
                   />
-                  <span className="text-primary-400 font-medium">Welcome back!</span>
+                  <span className="text-primary-400 font-medium text-sm sm:text-base">Welcome back!</span>
                 </div>
-                <h1 className="text-3xl font-bold text-white">
+                <h1 className="text-2xl sm:text-3xl xl:text-3xl font-bold text-white leading-tight">
                   Ready to learn something <span className="text-primary-400">amazing today?</span>
                 </h1>
-                <p className="text-dark-300 text-lg max-w-2xl">
+                <p className="text-dark-300 text-base sm:text-lg max-w-2xl">
                   Continue your personalized learning journey with AI-powered lessons.
                 </p>
               </div>
               
-              <div className="flex gap-3">
-                <button onClick={handleCreateNewTopic} className="btn-primary px-4 py-2">
-                  <Plus className="h-5 w-5 mr-2" />
-                  <span>New Learning Path</span>
+              <div className="flex flex-col sm:flex-row gap-3 w-full xl:w-auto">
+                <button onClick={handleCreateNewTopic} className="btn-primary px-4 py-2 flex-1 sm:flex-none">
+                  <Plus className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
+                  <span className="text-sm sm:text-base">New Learning Path</span>
                 </button>
-                <button className="btn-secondary px-4 py-2">
-                  <Brain className="h-5 w-5 mr-2" />
-                  <span>AI Recommendations</span>
+                <button className="btn-secondary px-4 py-2 flex-1 sm:flex-none">
+                  <Brain className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
+                  <span className="text-sm sm:text-base">AI Recommendations</span>
                 </button>
               </div>
             </div>
@@ -135,7 +152,7 @@ const Dashboard: React.FC = () => {
       </div>
 
       {/* Main Content Grid */}
-      <Grid cols={3} gap="lg" responsive={false} className="lg:grid-cols-3">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
         {/* Learning Paths */}
         <div className="lg:col-span-2 space-y-6">
           <div className="flex items-center justify-between">
@@ -257,7 +274,7 @@ const Dashboard: React.FC = () => {
             </div>
           </div>
         </div>
-      </Grid>
+      </div>
       </div>
     </Layout>
   );
