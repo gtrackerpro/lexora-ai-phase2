@@ -29,6 +29,7 @@ except ImportError:
                     key, value = line.strip().split('=', 1)
                     os.environ[key] = value
 
+import numpy as np
 import requests
 from flask import Flask, request, jsonify
 from werkzeug.exceptions import BadRequest
@@ -472,7 +473,7 @@ def health_check():
     return jsonify({
         'status': 'healthy',
         'service': 'wav2lip-enhanced',
-        'timestamp': datetime.utcnow().isoformat(),
+        'timestamp': datetime.now().isoformat(),
         'ffmpeg_available': True,
         'stats': stats
     })
@@ -512,7 +513,7 @@ def generate_video():
         
         # Generate unique session ID
         session_id = str(uuid.uuid4())
-        timestamp = datetime.utcnow().strftime('%Y%m%d_%H%M%S')
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
         
         # Add to active jobs
         wav2lip_service.active_jobs[session_id] = {
@@ -578,7 +579,7 @@ def generate_video():
                     'script_length': len(script),
                     'voice_language': voice_options.get('language', 'en'),
                     'voice_speed': voice_options.get('speed', 1.0),
-                    'timestamp': datetime.utcnow().isoformat()
+                    'timestamp': datetime.now().isoformat()
                 }
             })
             
