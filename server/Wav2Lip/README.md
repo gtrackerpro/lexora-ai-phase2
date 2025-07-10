@@ -1,69 +1,104 @@
-# Wav2Lip Video Generation Service
+# Wav2Lip AI Video Generation Service
 
-This service provides AI-powered lip-sync video generation using the Wav2Lip model. It's designed as a microservice that can be called from the main Lexora backend to generate personalized avatar videos.
+A Python-based microservice that generates AI-powered lip-sync videos using SadTalker technology integrated with ElevenLabs TTS for the Lexora AI tutoring platform. This service converts text scripts into realistic talking avatar videos with synchronized lip movements.
 
-## Features
+## 🚀 Features
 
-- **Lip-sync Video Generation**: Generate videos where avatars speak provided text with realistic lip movements
-- **Text-to-Speech Integration**: Convert text scripts to natural-sounding speech
-- **Multiple Voice Options**: Support for different languages and voice characteristics
-- **Docker Containerized**: Easy deployment and scaling
-- **RESTful API**: Simple HTTP endpoints for integration
+- **AI-Powered Lip Sync**: Generate realistic talking videos using SadTalker technology
+- **Advanced Text-to-Speech**: High-quality voice synthesis with ElevenLabs API
+- **Voice Cloning**: Custom voice generation from uploaded audio samples
+- **Cloud Integration**: AWS S3 storage for generated content
+- **RESTful API**: Flask-based HTTP endpoints for easy integration
+- **Cross-Platform**: Works on Windows, macOS, and Linux
+- **Python Environment Management**: Automatic virtual environment detection
 - **Health Monitoring**: Built-in health checks and status monitoring
 
-## Prerequisites
+## 📋 Prerequisites
 
-- Docker and Docker Compose
-- At least 4GB RAM (8GB recommended for GPU acceleration)
-- NVIDIA GPU (optional, for faster processing)
+- **Python 3.8+**: Latest Python version recommended
+- **Virtual Environment**: venv, .venv, env, or .env in project root
+- **API Keys**: ElevenLabs API key for TTS functionality
+- **AWS Credentials**: For S3 upload functionality (optional)
+- **System Memory**: At least 4GB RAM (8GB+ recommended)
+- **GPU Support**: NVIDIA GPU recommended for faster processing
 
-## Quick Start
+## 🛠️ Installation & Setup
 
-1. **Navigate to the Wav2Lip directory**:
-   ```bash
-   cd server/Wav2Lip
-   ```
+### 1. Environment Setup
 
-2. **Make the run script executable**:
-   ```bash
-   chmod +x run.sh
-   ```
+```bash
+# Navigate to the Wav2Lip directory
+cd server/Wav2Lip
 
-3. **Download Wav2Lip models** (required for full functionality):
-   ```bash
-   ./run.sh models
-   ```
-   
-   Follow the instructions to download the official Wav2Lip model files.
+# Create virtual environment (if not exists)
+python -m venv venv
 
-4. **Build and run the service**:
-   ```bash
-   ./run.sh run
-   ```
+# Activate virtual environment
+# Windows:
+venv\Scripts\activate
+# Linux/macOS:
+source venv/bin/activate
 
-5. **Check service health**:
-   ```bash
-   ./run.sh health
-   ```
+# Install dependencies
+pip install -r requirements.txt
+```
+
+### 2. SadTalker Setup
+
+```bash
+# Clone SadTalker repository
+git clone https://github.com/OpenTalker/SadTalker.git
+
+# Follow SadTalker installation instructions
+# Install PyTorch, torchvision, and required dependencies
+# Download pre-trained models as specified in SadTalker documentation
+```
+
+### 3. Environment Variables
+
+Create a `.env` file in the project root:
+
+```env
+# ElevenLabs API Configuration
+ELEVENLABS_API_KEY=your_elevenlabs_api_key_here
+
+# AWS S3 Configuration (optional)
+AWS_ACCESS_KEY_ID=your_aws_access_key
+AWS_SECRET_ACCESS_KEY=your_aws_secret_key
+AWS_REGION=ap-south-1
+AWS_BUCKET_NAME=lexora-assets
+
+# Service Configuration
+FLASK_ENV=production
+FLASK_DEBUG=false
+```
+
+### 4. Quick Start
+
+```bash
+# Start the service using the Python runner
+python run.py
+
+# Or run directly
+python app/main.py
+```
 
 The service will be available at `http://localhost:5001`
 
-## API Endpoints
+## 🔌 API Endpoints
 
 ### Health Check
 ```http
 GET /health
 ```
 
-Returns service status and configuration.
+Returns service status and health information.
 
 **Response**:
 ```json
 {
   "status": "healthy",
-  "service": "wav2lip",
-  "device": "cuda",
-  "model_loaded": true
+  "message": "Wav2Lip service is running"
 }
 ```
 
@@ -80,11 +115,10 @@ Generate a lip-synced video from text script and avatar image.
   "script": "Hello! Welcome to this lesson on Python programming...",
   "avatar_url": "https://example.com/avatar.jpg",
   "voice_options": {
-    "language": "en-US",
-    "speed": 1.0,
-    "pitch": 0
+    "voice_sample_url": "https://example.com/voice-sample.mp3"
   },
-  "lesson_id": "lesson_123"
+  "lesson_id": "lesson_123",
+  "lesson_title": "Introduction to Python"
 }
 ```
 
@@ -92,26 +126,29 @@ Generate a lip-synced video from text script and avatar image.
 ```json
 {
   "success": true,
-  "video_url": "https://s3.amazonaws.com/generated/videos/session_id.mp4",
-  "audio_url": "https://s3.amazonaws.com/generated/audio/session_id.wav",
+  "video_url": "https://s3.amazonaws.com/generated-videos/video_session_id.mp4",
+  "audio_url": "https://s3.amazonaws.com/generated-audios/audio_session_id.mp3",
+  "session_id": "uuid-session-id",
   "duration": 45.2,
-  "session_id": "uuid-session-id"
+  "s3_upload": {
+    "video": true,
+    "audio": true
+  }
 }
 ```
 
-### Get Status
+### Voice Cleanup
 ```http
-GET /status/{session_id}
+DELETE /cleanup-voice/{voice_id}
 ```
 
-Check the status of a video generation job.
+Delete a cloned voice from ElevenLabs to free up resources.
 
 **Response**:
 ```json
 {
-  "session_id": "uuid-session-id",
-  "status": "completed",
-  "progress": 100
+  "success": true,
+  "message": "Voice deleted successfully"
 }
 ```
 
