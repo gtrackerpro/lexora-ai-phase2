@@ -2,6 +2,7 @@ import axios from 'axios';
 import fs from 'fs';
 import path from 'path';
 import { promisify } from 'util';
+import FormData from 'form-data';
 import awsService from './awsService';
 
 const writeFile = promisify(fs.writeFile);

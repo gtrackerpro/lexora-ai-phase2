@@ -8,6 +8,7 @@ export interface IAsset extends Document {
   fileSize: number;
   mimeType: string;
   usedIn: mongoose.Types.ObjectId[];
+  elevenLabsVoiceId?: string; // Store ElevenLabs voice ID for audio assets
   createdAt: Date;
 }
 
@@ -42,6 +43,10 @@ const assetSchema = new Schema<IAsset>({
     type: Schema.Types.ObjectId,
     refPath: 'type'
   }],
+  elevenLabsVoiceId: {
+    type: String,
+    required: false
+  },
   createdAt: {
     type: Date,
     default: Date.now

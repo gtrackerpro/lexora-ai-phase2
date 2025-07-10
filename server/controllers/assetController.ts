@@ -95,7 +95,7 @@ export const uploadAsset = async (req: Request, res: Response) => {
             });
             
             // Store the ElevenLabs voice ID in the asset metadata
-            asset.usedIn = [voiceId];
+            asset.elevenLabsVoiceId = voiceId;
             await asset.save();
             
             console.log(`ElevenLabs voice created with ID: ${voiceId}`);
@@ -209,11 +209,10 @@ export const deleteAsset = async (req: Request, res: Response) => {
     }
 
     // If this is an audio asset with ElevenLabs voice, delete the voice
-    if (asset.type === 'audio' && asset.usedIn.length > 0) {
+    if (asset.type === 'audio' && asset.elevenLabsVoiceId) {
       try {
-        const voiceId = asset.usedIn[0].toString();
-        console.log(`Deleting ElevenLabs voice: ${voiceId}`);
-        await ttsService.deleteVoice(voiceId);
+        console.log(`Deleting ElevenLabs voice: ${asset.elevenLabsVoiceId}`);
+        await ttsService.deleteVoice(asset.elevenLabsVoiceId);
       } catch (voiceError) {
         console.error('Failed to delete ElevenLabs voice:', voiceError);
         // Continue with asset deletion even if voice deletion fails

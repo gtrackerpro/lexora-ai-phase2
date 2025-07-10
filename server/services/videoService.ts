@@ -133,7 +133,7 @@ class VideoService {
       // Method 1: Generate audio first with ElevenLabs, then use D-ID with audio URL
       const audioResult = await this.generateAudioFirst(script, voiceId, videoId);
       
-      if (audioResult.success) {
+      if (audioResult.success && audioResult.audioUrl) {
         // Use D-ID with pre-generated audio
         const didResult = await this.createDIDTalkWithAudio(avatarUrl, audioResult.audioUrl);
         await this.pollDIDStatus(videoId, didResult.id, audioResult.audioUrl, audioResult.duration);
