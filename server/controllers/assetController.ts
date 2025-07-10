@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import Asset from '../models/Asset';
 import awsService from '../services/awsService';
+import ttsService from '../services/ttsService';
 import multer from 'multer';
 
 // Configure multer for memory storage
@@ -83,6 +84,26 @@ export const uploadAsset = async (req: Request, res: Response) => {
           usedIn: []
         });
 
+        // If this is an audio file for voice cloning, create ElevenLabs voice
+        if (type === 'audio') {
+          try {
+            console.log('Creating ElevenLabs voice clone from uploaded audio...');
+            const voiceId = await ttsService.cloneVoice({
+              name: `${req.user?.displayName || 'User'}_Voice_${Date.now()}`,
+              description: `Custom voice for ${req.user?.displayName || 'user'}`,
+              audioFile: req.file.buffer
+            });
+            
+            // Store the ElevenLabs voice ID in the asset metadata
+            asset.usedIn = [voiceId];
+            await asset.save();
+            
+            console.log(`ElevenLabs voice created with ID: ${voiceId}`);
+          } catch (voiceError) {
+            console.error('Failed to create ElevenLabs voice:', voiceError);
+            // Don't fail the upload, just log the error
+          }
+        }
         res.status(201).json({
           success: true,
           asset
@@ -187,6 +208,17 @@ export const deleteAsset = async (req: Request, res: Response) => {
       });
     }
 
+    // If this is an audio asset with ElevenLabs voice, delete the voice
+    if (asset.type === 'audio' && asset.usedIn.length > 0) {
+      try {
+        const voiceId = asset.usedIn[0].toString();
+        console.log(`Deleting ElevenLabs voice: ${voiceId}`);
+        await ttsService.deleteVoice(voiceId);
+      } catch (voiceError) {
+        console.error('Failed to delete ElevenLabs voice:', voiceError);
+        // Continue with asset deletion even if voice deletion fails
+      }
+    }
     // Delete from S3
     try {
       const fileKey = asset.fileUrl.split('/').slice(-2).join('/'); // Extract key from URL

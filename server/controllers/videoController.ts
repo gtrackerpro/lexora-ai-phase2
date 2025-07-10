@@ -197,22 +197,22 @@ export const cleanupTempFiles = async (req: Request, res: Response) => {
   }
 };
 // @desc    Check Wav2Lip service health
-// @route   GET /api/videos/wav2lip/health
+// @route   GET /api/videos/did/health
 // @access  Private
-export const checkWav2LipHealth = async (req: Request, res: Response) => {
+export const checkDIDHealth = async (req: Request, res: Response) => {
   try {
-    const isHealthy = await videoService.checkWav2LipHealth();
+    const isHealthy = await videoService.checkDIDHealth();
     
     res.status(200).json({
       success: true,
       healthy: isHealthy,
-      message: isHealthy ? 'Wav2Lip service is healthy' : 'Wav2Lip service is not responding'
+      message: isHealthy ? 'D-ID service is healthy' : 'D-ID service is not responding'
     });
   } catch (error) {
-    console.error('Wav2Lip Health Check Error:', error);
+    console.error('D-ID Health Check Error:', error);
     res.status(500).json({
       success: false,
-      message: 'Failed to check Wav2Lip service health'
+      message: 'Failed to check D-ID service health'
     });
   }
 };

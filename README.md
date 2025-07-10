@@ -39,9 +39,9 @@ Lexora is a full-stack AI education platform that generates structured lessons f
 - **bcryptjs** for password hashing
 
 ### AI & Media Processing
-- **LLaMA 3** via Groq for content generation
-- **gTTS** (Google Text-to-Speech) for narration
-- **Wav2Lip** for avatar video syncing
+- **LLaMA 3** via Groq for content generation  
+- **ElevenLabs** for advanced text-to-speech and voice cloning
+- **D-ID** for AI-powered avatar video generation
 - **AWS S3** for asset storage
 
 ## 📋 Prerequisites
@@ -114,6 +114,13 @@ AWS_REGION=us-east-1
 
 # AI Service (Optional for AI features)
 GROQ_API_KEY=your-groq-api-key
+
+# ElevenLabs API Configuration
+ELEVENLABS_API_KEY=your-elevenlabs-api-key-here
+
+# D-ID API Configuration  
+D_ID_API_KEY=your-d-id-api-key-here
+D_ID_BASE_URL=https://api.d-id.com
 
 # Frontend URL
 CLIENT_URL=http://localhost:5173
@@ -237,6 +244,7 @@ lexora-mern-platform/
 - **Form Validation** - Real-time validation with helpful error messages
 - **Loading States** - Proper loading indicators and skeleton screens
 - **Toast Notifications** - User feedback for actions
+- **Professional Video Generation** - ElevenLabs + D-ID integration for high-quality avatar videos
 
 ## 🧪 Testing
 

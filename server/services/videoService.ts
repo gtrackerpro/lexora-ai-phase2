@@ -1,6 +1,8 @@
 import Video, { IVideo } from '../models/Video';
 import Asset from '../models/Asset';
 import Lesson, { ILesson } from '../models/Lesson';
+import ttsService from './ttsService';
+import awsService from './awsService';
 import axios from 'axios';
 import mongoose from 'mongoose';
 
@@ -12,20 +14,60 @@ interface GenerateVideoParams {
   voiceId: string;
 }
 
-interface Wav2LipResponse {
-  success: boolean;
-  video_url?: string;
-  audio_url?: string;
-  duration?: number;
-  session_id?: string;
-  error?: string;
+interface DIDCreateTalkRequest {
+  source_url: string;
+  script: {
+    type: 'audio';
+    audio_url: string;
+  } | {
+    type: 'text';
+    input: string;
+    provider: {
+      type: 'elevenlabs';
+      voice_id: string;
+    };
+  };
+  config?: {
+    fluent?: boolean;
+    pad_audio?: number;
+    stitch?: boolean;
+    result_format?: 'mp4' | 'gif' | 'mov';
+  };
+}
+
+interface DIDTalkResponse {
+  id: string;
+  object: string;
+  created_at: string;
+  status: 'created' | 'started' | 'done' | 'error' | 'rejected';
+  result_url?: string;
+  error?: {
+    type: string;
+    description: string;
+  };
+  metadata?: {
+    driver_url?: string;
+    mouth_open?: string;
+    num_faces?: number;
+    num_frames?: number;
+    processing_fps?: number;
+    resolution?: [number, number];
+    size_kib?: number;
+    duration?: number;
+  };
 }
 
 class VideoService {
-  private wav2lipServiceUrl: string;
+  private didApiKey: string;
+  private didBaseUrl: string;
 
   constructor() {
-    this.wav2lipServiceUrl = process.env.WAV2LIP_SERVICE_URL || 'http://localhost:5001';
+    this.didApiKey = process.env.D_ID_API_KEY || '';
+    this.didBaseUrl = process.env.D_ID_BASE_URL || 'https://api.d-id.com';
+
+    if (!this.didApiKey) {
+      console.warn('D_ID_API_KEY not found in environment variables');
+    }
   }
 
   async generateVideo(params: GenerateVideoParams) {
@@ -40,7 +82,7 @@ class VideoService {
 
       console.log(`Looking up avatar asset with ID: ${avatarId}`);
       
-      // Get avatar asset (voice preferences will be handled by TTS service)
+      // Get avatar asset
       const avatar = await Asset.findById(avatarId);
       if (!avatar) {
         console.error(`Avatar asset not found with ID: ${avatarId}`);
@@ -49,17 +91,6 @@ class VideoService {
       
       console.log(`Avatar found: ${avatar.fileName} (${avatar.mimeType})`);
       console.log(`Avatar URL: ${avatar.fileUrl}`);
-      
-      // Validate voiceId if provided
-      if (voiceId) {
-        console.log(`Looking up voice asset with ID: ${voiceId}`);
-        const voice = await Asset.findById(voiceId);
-        if (!voice) {
-          console.error(`Voice asset not found with ID: ${voiceId}`);
-          throw new Error(`Voice asset not found with ID: ${voiceId}. Please check if the voice sample was uploaded properly.`);
-        }
-        console.log(`Voice found: ${voice.fileName} (${voice.mimeType})`);
-      }
 
       // Create video record with generating status
       const video = await Video.create({
@@ -97,29 +128,21 @@ class VideoService {
     lessonTitle?: string
   ) {
     try {
-      console.log(`Starting video generation for ${videoId}`);
+      console.log(`Starting D-ID video generation for ${videoId}`);
       
-      // Get voice preferences
-      const voiceOptions = await this.getVoiceOptions(voiceId);
+      // Method 1: Generate audio first with ElevenLabs, then use D-ID with audio URL
+      const audioResult = await this.generateAudioFirst(script, voiceId, videoId);
       
-      // Call Wav2Lip service for video generation
-      const result = await this.callWav2LipService({
-        script,
-        avatar_url: avatarUrl,
-        voice_options: voiceOptions,
-        lesson_id: videoId,
-        lesson_title: lessonTitle
-      });
+      if (audioResult.success) {
+        // Use D-ID with pre-generated audio
+        const didResult = await this.createDIDTalkWithAudio(avatarUrl, audioResult.audioUrl);
+        await this.pollDIDStatus(videoId, didResult.id, audioResult.audioUrl, audioResult.duration);
+      } else {
+        // Fallback: Use D-ID with text and ElevenLabs integration
+        const didResult = await this.createDIDTalkWithText(avatarUrl, script, voiceId);
+        await this.pollDIDStatus(videoId, didResult.id);
+      }
 
-      // Update video record with results
-      await Video.findByIdAndUpdate(videoId, {
-        videoUrl: result.video_url,
-        audioUrl: result.audio_url || result.video_url, // Use video URL as fallback for audio
-        durationSec: result.duration || 60, // Default duration if not provided
-        status: 'completed'
-      });
-
-      console.log(`Video generation completed for ${videoId}: ${result.duration || 0}s`);
     } catch (error) {
       console.error(`Video generation failed for ${videoId}:`, error);
       
@@ -131,101 +154,217 @@ class VideoService {
   }
 
   /**
-   * Call the Wav2Lip microservice for video generation (local implementation)
+   * Method 1: Generate audio with ElevenLabs first, then use D-ID
    */
-  private async callWav2LipService(params: {
-    script: string;
-    avatar_url: string;
-    voice_options: any;
-    lesson_id: string;
-    lesson_title?: string;
-  }): Promise<Wav2LipResponse> {
+  private async generateAudioFirst(script: string, voiceId?: string, videoId?: string): Promise<{
+    success: boolean;
+    audioUrl?: string;
+    duration?: number;
+  }> {
     try {
-      console.log('Calling Video Generation service:', this.wav2lipServiceUrl);
+      console.log('Generating audio with ElevenLabs first...');
       
-      const requestPayload = {
-        ...params
-      };
-      
-      console.log('Request payload:', requestPayload);
-      
-      const response = await axios.post<Wav2LipResponse>(
-        `${this.wav2lipServiceUrl}/generate-video`,
-        requestPayload,
-        {
-          timeout: 300000, // 5 minutes timeout
-          headers: {
-            'Content-Type': 'application/json'
-          }
-        }
+      const audioResult = await ttsService.generateAndUploadSpeech(
+        script,
+        `lesson_audio_${videoId || Date.now()}`,
+        { voiceId }
       );
 
-      if (!response.data.success) {
-        throw new Error(response.data.error || 'Video generation service returned error');
-      }
-
-      return response.data;
-    } catch (error: any) {
-      if (error.code === 'ECONNREFUSED') {
-        throw new Error('Video generation service is not available. Please ensure the service is running.');
-      } else if (error.code === 'ETIMEDOUT') {
-        throw new Error('Video generation timed out. Please try again.');
-      } else if (error.response) {
-        throw new Error(`Video generation service error: ${error.response.data?.error || error.response.statusText}`);
-      } else {
-        throw new Error(`Failed to call video generation service: ${error.message}`);
-      }
+      return {
+        success: true,
+        audioUrl: audioResult.audioUrl,
+        duration: audioResult.duration
+      };
+    } catch (error) {
+      console.error('Failed to generate audio first:', error);
+      return { success: false };
     }
   }
 
   /**
-   * Check if Wav2Lip service is healthy
+   * Create D-ID talk with pre-generated audio
    */
-  async checkWav2LipHealth(): Promise<boolean> {
+  private async createDIDTalkWithAudio(avatarUrl: string, audioUrl: string): Promise<DIDTalkResponse> {
+    const requestBody: DIDCreateTalkRequest = {
+      source_url: avatarUrl,
+      script: {
+        type: 'audio',
+        audio_url: audioUrl
+      },
+      config: {
+        fluent: false,
+        pad_audio: 0.0,
+        stitch: true,
+        result_format: 'mp4'
+      }
+    };
+
+    return await this.makeDIDRequest(requestBody);
+  }
+
+  /**
+   * Create D-ID talk with text (fallback method)
+   */
+  private async createDIDTalkWithText(avatarUrl: string, script: string, voiceId?: string): Promise<DIDTalkResponse> {
+    const requestBody: DIDCreateTalkRequest = {
+      source_url: avatarUrl,
+      script: {
+        type: 'text',
+        input: script,
+        provider: {
+          type: 'elevenlabs',
+          voice_id: voiceId || 'pNInz6obpgDQGcFmaJgB' // Default Adam voice
+        }
+      },
+      config: {
+        fluent: false,
+        pad_audio: 0.0,
+        stitch: true,
+        result_format: 'mp4'
+      }
+    };
+
+    return await this.makeDIDRequest(requestBody);
+  }
+
+  /**
+   * Make the actual D-ID API request
+   */
+  private async makeDIDRequest(requestBody: DIDCreateTalkRequest): Promise<DIDTalkResponse> {
     try {
-      const response = await axios.get(`${this.wav2lipServiceUrl}/health`, {
-        timeout: 5000
-      });
-      return response.data.status === 'healthy';
-    } catch (error) {
-      console.error('Wav2Lip health check failed:', error);
-      return false;
+      console.log('Creating D-ID talk with request:', JSON.stringify(requestBody, null, 2));
+
+      const response = await axios.post<DIDTalkResponse>(
+        `${this.didBaseUrl}/talks`,
+        requestBody,
+        {
+          headers: {
+            'Authorization': `Basic ${this.didApiKey}`,
+            'Content-Type': 'application/json'
+          },
+          timeout: 30000 // 30 seconds timeout
+        }
+      );
+
+      console.log(`D-ID talk created with ID: ${response.data.id}`);
+      return response.data;
+    } catch (error: any) {
+      console.error('D-ID API Error:', error.response?.data || error.message);
+      throw new Error(`D-ID API failed: ${error.response?.data?.error?.description || error.message}`);
     }
   }
 
-  private async getVoiceOptions(voiceId?: string): Promise<any> {
-    if (!voiceId) {
-      // Return default voice options
-      return {
-        language: 'en-US',
-        speed: 1.0,
-        pitch: 0
-      };
-    }
+  /**
+   * Poll D-ID status until video is ready
+   */
+  private async pollDIDStatus(
+    videoId: string, 
+    didTalkId: string, 
+    audioUrl?: string, 
+    duration?: number
+  ): Promise<void> {
+    const maxAttempts = 60; // 5 minutes with 5-second intervals
+    let attempts = 0;
 
-    try {
-      // Get voice asset and extract URL for voice cloning
-      const voiceAsset = await Asset.findById(voiceId);
-      if (voiceAsset && voiceAsset.fileUrl) {
-        console.log(`Found voice sample: ${voiceAsset.fileName} at ${voiceAsset.fileUrl}`);
-        // Return voice options with sample URL for cloning
-        return {
-          language: 'en-US',
-          speed: 1.0,
-          pitch: 0,
-          voice_sample_url: voiceAsset.fileUrl  // This will be used for voice cloning
-        };
+    const poll = async (): Promise<void> => {
+      try {
+        attempts++;
+        console.log(`Polling D-ID status for talk ${didTalkId}, attempt ${attempts}/${maxAttempts}`);
+
+        const response = await axios.get<DIDTalkResponse>(
+          `${this.didBaseUrl}/talks/${didTalkId}`,
+          {
+            headers: {
+              'Authorization': `Basic ${this.didApiKey}`
+            },
+            timeout: 10000
+          }
+        );
+
+        const talk = response.data;
+        console.log(`D-ID talk status: ${talk.status}`);
+
+        switch (talk.status) {
+          case 'done':
+            // Video generation completed successfully
+            await Video.findByIdAndUpdate(videoId, {
+              videoUrl: talk.result_url,
+              audioUrl: audioUrl || talk.result_url, // Use audio URL if available, otherwise video URL
+              durationSec: duration || talk.metadata?.duration || 60,
+              status: 'completed'
+            });
+            console.log(`Video generation completed for ${videoId}: ${talk.result_url}`);
+            break;
+
+          case 'error':
+          case 'rejected':
+            // Video generation failed
+            const errorMessage = talk.error?.description || 'Unknown error';
+            console.error(`D-ID video generation failed: ${errorMessage}`);
+            await Video.findByIdAndUpdate(videoId, {
+              status: 'failed'
+            });
+            break;
+
+          case 'created':
+          case 'started':
+            // Still processing, continue polling
+            if (attempts < maxAttempts) {
+              setTimeout(poll, 5000); // Poll every 5 seconds
+            } else {
+              // Timeout reached
+              console.error(`D-ID video generation timed out for ${videoId}`);
+              await Video.findByIdAndUpdate(videoId, {
+                status: 'failed'
+              });
+            }
+            break;
+
+          default:
+            console.warn(`Unknown D-ID status: ${talk.status}`);
+            if (attempts < maxAttempts) {
+              setTimeout(poll, 5000);
+            } else {
+              await Video.findByIdAndUpdate(videoId, {
+                status: 'failed'
+              });
+            }
+        }
+      } catch (error) {
+        console.error(`Error polling D-ID status:`, error);
+        if (attempts < maxAttempts) {
+          setTimeout(poll, 5000); // Retry on error
+        } else {
+          await Video.findByIdAndUpdate(videoId, {
+            status: 'failed'
+          });
+        }
       }
-    } catch (error) {
-      console.error('Error getting voice options:', error);
-    }
-
-    // Fallback to default
-    return {
-      language: 'en-US',
-      speed: 1.0,
-      pitch: 0
     };
+
+    // Start polling
+    setTimeout(poll, 2000); // Initial delay of 2 seconds
+  }
+
+  /**
+   * Check D-ID service health
+   */
+  async checkDIDHealth(): Promise<boolean> {
+    try {
+      // D-ID doesn't have a dedicated health endpoint, so we'll check credits
+      const response = await axios.get(`${this.didBaseUrl}/credits`, {
+        headers: {
+          'Authorization': `Basic ${this.didApiKey}`
+        },
+        timeout: 5000
+      });
+      
+      console.log('D-ID service is healthy, credits:', response.data);
+      return true;
+    } catch (error) {
+      console.error('D-ID health check failed:', error);
+      return false;
+    }
   }
 
   async getVideoStatus(videoId: string) {
@@ -249,12 +388,8 @@ class VideoService {
       video.status = 'generating';
       await video.save();
 
-      // Get assets
-      const [avatar, voice] = await Promise.all([
-        Asset.findById(video.avatarId),
-        Asset.findById(video.voiceId)
-      ]);
-
+      // Get avatar asset
+      const avatar = await Asset.findById(video.avatarId);
       if (!avatar) {
         throw new Error('Avatar asset not found');
       }
@@ -279,26 +414,11 @@ class VideoService {
   }
 
   /**
-   * Get available TTS voices from Wav2Lip service
+   * Get available voices (from ElevenLabs via TTS service)
    */
   async getAvailableVoices() {
     try {
-      // For now, return a static list. In the future, this could call the Wav2Lip service
-      return [
-        { id: 'en-US', name: 'English (US)', language: 'en-US', gender: 'neutral' },
-        { id: 'en-GB', name: 'English (UK)', language: 'en-GB', gender: 'neutral' },
-        { id: 'es-ES', name: 'Spanish', language: 'es-ES', gender: 'neutral' },
-        { id: 'fr-FR', name: 'French', language: 'fr-FR', gender: 'neutral' },
-        { id: 'de-DE', name: 'German', language: 'de-DE', gender: 'neutral' },
-        { id: 'it-IT', name: 'Italian', language: 'it-IT', gender: 'neutral' },
-        { id: 'pt-PT', name: 'Portuguese', language: 'pt-PT', gender: 'neutral' },
-        { id: 'ru-RU', name: 'Russian', language: 'ru-RU', gender: 'neutral' },
-        { id: 'ja-JP', name: 'Japanese', language: 'ja-JP', gender: 'neutral' },
-        { id: 'ko-KR', name: 'Korean', language: 'ko-KR', gender: 'neutral' },
-        { id: 'zh-CN', name: 'Chinese', language: 'zh-CN', gender: 'neutral' },
-        { id: 'hi-IN', name: 'Hindi', language: 'hi-IN', gender: 'neutral' },
-        { id: 'ar-SA', name: 'Arabic', language: 'ar-SA', gender: 'neutral' }
-      ];
+      return await ttsService.getAvailableVoices();
     } catch (error) {
       console.error('Failed to get available voices:', error);
       return [];
@@ -310,13 +430,10 @@ class VideoService {
    */
   async cleanup() {
     try {
-      // Call cleanup endpoint on Wav2Lip service
-      await axios.post(`${this.wav2lipServiceUrl}/cleanup`, {}, {
-        timeout: 10000
-      });
-      console.log('Wav2Lip service cleanup completed');
+      await ttsService.cleanup();
+      console.log('Video service cleanup completed');
     } catch (error) {
-      console.error('Failed to cleanup Wav2Lip service:', error);
+      console.error('Failed to cleanup video service:', error);
     }
   }
 }

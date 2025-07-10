@@ -433,9 +433,21 @@ const ProfileSettings: React.FC = () => {
                 <Volume2 className="h-5 w-5 text-primary-400" />
                 <h3 className="text-lg font-semibold text-white">Voice Management</h3>
               </div>
+              <div className="text-xs text-dark-400">
+                Powered by ElevenLabs
+              </div>
+            </div>
+            <div className="bg-primary-600/10 border border-primary-600/30 rounded-xl p-4 mb-6">
+              <h4 className="text-primary-400 font-medium mb-2">Voice Cloning with ElevenLabs</h4>
+              <p className="text-dark-300 text-sm">
+                Upload a clear audio sample (at least 30 seconds) to create a custom voice clone. 
+                The audio will be processed by ElevenLabs to create a unique voice profile for your lessons.
+              </p>
+            </div>
+            <div className="flex items-center justify-between">
               <label className="btn-primary px-4 py-2 cursor-pointer flex items-center space-x-2">
                 <Upload className="h-4 w-4" />
-                <span>{uploading ? 'Uploading...' : 'Upload Voice'}</span>
+                <span>{uploading ? 'Uploading...' : 'Upload Voice Sample'}</span>
                 <input
                   type="file"
                   accept="audio/*"

@@ -310,7 +310,7 @@ const LessonViewer: React.FC = () => {
                   <AlertCircle className="h-12 w-12 text-error-400 mx-auto mb-4" />
                   <p className="text-white text-lg mb-2">Video Generation Failed</p>
                   <p className="text-dark-400 text-sm mb-6">
-                    There was an error generating your video. Please try again.
+                    There was an error generating your video with D-ID. Please try again.
                   </p>
                   <button
                     onClick={handleGenerateVideo}
@@ -337,7 +337,7 @@ const LessonViewer: React.FC = () => {
                   <VideoIcon className="h-16 w-16 text-dark-600 mx-auto mb-4" />
                   <p className="text-white text-lg mb-2">No Video Available</p>
                   <p className="text-dark-400 text-sm mb-6">
-                    Generate a personalized video with your avatar and voice
+                    Generate a personalized video with your avatar using ElevenLabs and D-ID
                   </p>
                   <button
                     onClick={handleGenerateVideo}

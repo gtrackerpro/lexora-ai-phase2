@@ -2,11 +2,7 @@ import axios from 'axios';
 import fs from 'fs';
 import path from 'path';
 import { promisify } from 'util';
-import { Readable } from 'stream';
 import awsService from './awsService';
-
-// Import gTTS for local text-to-speech
-const gTTS = require('gtts');
 
 const writeFile = promisify(fs.writeFile);
 const unlink = promisify(fs.unlink);
@@ -14,23 +10,41 @@ const unlink = promisify(fs.unlink);
 interface TTSOptions {
   text: string;
   voice?: string;
-  speed?: number;
-  pitch?: number;
-  language?: string;
+  voiceId?: string;
+  stability?: number;
+  similarityBoost?: number;
+  style?: number;
+  useSpeakerBoost?: boolean;
 }
 
 interface TTSResult {
   audioBuffer: Buffer;
   duration: number;
   format: string;
+  audioUrl?: string;
+}
+
+interface VoiceCloneOptions {
+  name: string;
+  description?: string;
+  audioFile: Buffer;
+  labels?: Record<string, string>;
 }
 
 class TTSService {
   private tempDir: string;
+  private apiKey: string;
+  private baseUrl: string;
 
   constructor() {
     this.tempDir = path.join(process.cwd(), 'temp');
+    this.apiKey = process.env.ELEVENLABS_API_KEY || '';
+    this.baseUrl = 'https://api.elevenlabs.io/v1';
     this.ensureTempDir();
+
+    if (!this.apiKey) {
+      console.warn('ELEVENLABS_API_KEY not found in environment variables');
+    }
   }
 
   private ensureTempDir() {
@@ -40,139 +54,148 @@ class TTSService {
   }
 
   /**
-   * Generate speech from text using Google TTS
+   * Generate speech from text using ElevenLabs TTS
    */
   async generateSpeech(options: TTSOptions): Promise<TTSResult> {
     try {
-      const { text, voice = 'en-US-Standard-D', speed = 1.0, pitch = 0, language = 'en-US' } = options;
+      const {
+        text,
+        voiceId = 'pNInz6obpgDQGcFmaJgB', // Default Adam voice
+        stability = 0.5,
+        similarityBoost = 0.8,
+        style = 0.0,
+        useSpeakerBoost = true
+      } = options;
 
-      // Use Google Cloud TTS API if available, otherwise fallback to gTTS
-      if (process.env.GOOGLE_CLOUD_TTS_API_KEY) {
-        return await this.generateWithGoogleCloudTTS(text, voice, speed, pitch, language);
-      } else {
-        return await this.generateWithGTTS(text, language);
-      }
-    } catch (error) {
-      console.error('TTS Generation Error:', error);
-      throw new Error('Failed to generate speech');
-    }
-  }
+      console.log(`Generating speech with ElevenLabs for voice: ${voiceId}`);
 
-  /**
-   * Generate speech using Google Cloud TTS API
-   */
-  private async generateWithGoogleCloudTTS(
-    text: string, 
-    voice: string, 
-    speed: number, 
-    pitch: number, 
-    language: string
-  ): Promise<TTSResult> {
-    try {
       const response = await axios.post(
-        `https://texttospeech.googleapis.com/v1/text:synthesize?key=${process.env.GOOGLE_CLOUD_TTS_API_KEY}`,
+        `${this.baseUrl}/text-to-speech/${voiceId}`,
         {
-          input: { text },
-          voice: {
-            languageCode: language,
-            name: voice
-          },
-          audioConfig: {
-            audioEncoding: 'MP3',
-            speakingRate: speed,
-            pitch: pitch
+          text,
+          model_id: 'eleven_multilingual_v2',
+          voice_settings: {
+            stability,
+            similarity_boost: similarityBoost,
+            style,
+            use_speaker_boost: useSpeakerBoost
           }
         },
         {
           headers: {
-            'Content-Type': 'application/json'
-          }
+            'Accept': 'audio/mpeg',
+            'Content-Type': 'application/json',
+            'xi-api-key': this.apiKey
+          },
+          responseType: 'arraybuffer'
         }
       );
 
-      const audioContent = response.data.audioContent;
-      const audioBuffer = Buffer.from(audioContent, 'base64');
+      const audioBuffer = Buffer.from(response.data);
       
-      // Estimate duration (rough calculation: ~150 words per minute)
+      // Estimate duration based on text length (rough calculation: ~150 words per minute)
       const wordCount = text.split(' ').length;
       const estimatedDuration = Math.ceil((wordCount / 150) * 60);
+
+      console.log(`ElevenLabs TTS completed. Audio size: ${audioBuffer.length} bytes, Duration: ${estimatedDuration}s`);
 
       return {
         audioBuffer,
         duration: estimatedDuration,
         format: 'mp3'
       };
-    } catch (error) {
-      console.error('Google Cloud TTS Error:', error);
-      throw error;
+    } catch (error: any) {
+      console.error('ElevenLabs TTS Error:', error.response?.data || error.message);
+      throw new Error(`Failed to generate speech: ${error.response?.data?.detail?.message || error.message}`);
     }
   }
 
   /**
-   * Generate speech using gTTS (local method)
+   * Clone a voice from an audio sample
    */
-  private async generateWithGTTS(text: string, language: string): Promise<TTSResult> {
-    return new Promise((resolve, reject) => {
-      try {
-        console.log('Generating TTS with gTTS for text:', text.substring(0, 50) + '...');
-        
-        // Parse language code for gTTS (it expects just the language part)
-        const gTTSLanguage = language.split('-')[0]; // 'en-US' -> 'en'
-        
-        const tempFileName = `tts_${Date.now()}_${Math.random().toString(36).substr(2, 9)}.mp3`;
-        const tempFilePath = path.join(this.tempDir, tempFileName);
+  async cloneVoice(options: VoiceCloneOptions): Promise<string> {
+    try {
+      const { name, description, audioFile, labels } = options;
 
-        // Create gTTS instance
-        const gtts = new gTTS(text, gTTSLanguage);
-        
-        // Save to temporary file
-        gtts.save(tempFilePath, (err: any) => {
-          if (err) {
-            console.error('gTTS Save Error:', err);
-            reject(new Error(`gTTS generation failed: ${err.message}`));
-            return;
+      console.log(`Cloning voice with name: ${name}`);
+
+      const formData = new FormData();
+      formData.append('name', name);
+      if (description) formData.append('description', description);
+      if (labels) formData.append('labels', JSON.stringify(labels));
+
+      // Create a temporary file for the audio
+      const tempFileName = `voice_clone_${Date.now()}.mp3`;
+      const tempFilePath = path.join(this.tempDir, tempFileName);
+      await writeFile(tempFilePath, audioFile);
+
+      // Add the file to form data
+      const fileStream = fs.createReadStream(tempFilePath);
+      formData.append('files', fileStream);
+
+      const response = await axios.post(
+        `${this.baseUrl}/voices/add`,
+        formData,
+        {
+          headers: {
+            'xi-api-key': this.apiKey,
+            ...formData.getHeaders()
           }
+        }
+      );
 
-          try {
-            // Read the generated file
-            const audioBuffer = fs.readFileSync(tempFilePath);
-            
-            // Clean up temp file
-            fs.unlink(tempFilePath, (unlinkErr) => {
-              if (unlinkErr) {
-                console.warn('Failed to clean up temp file:', unlinkErr);
-              }
-            });
+      // Clean up temp file
+      await unlink(tempFilePath).catch(() => {});
 
-            // Estimate duration based on text length
-            const wordCount = text.split(' ').length;
-            const estimatedDuration = Math.ceil((wordCount / 150) * 60); // ~150 words per minute
+      const voiceId = response.data.voice_id;
+      console.log(`Voice cloned successfully with ID: ${voiceId}`);
 
-            console.log(`gTTS generation completed. Audio size: ${audioBuffer.length} bytes, Duration: ${estimatedDuration}s`);
+      return voiceId;
+    } catch (error: any) {
+      console.error('Voice cloning error:', error.response?.data || error.message);
+      throw new Error(`Failed to clone voice: ${error.response?.data?.detail?.message || error.message}`);
+    }
+  }
 
-            resolve({
-              audioBuffer,
-              duration: estimatedDuration,
-              format: 'mp3'
-            });
-          } catch (readError) {
-            console.error('Error reading generated audio file:', readError);
-            reject(new Error('Failed to read generated audio file'));
-          }
-        });
-      } catch (error) {
-        console.error('gTTS Error:', error);
-        reject(new Error(`gTTS initialization failed: ${error}`));
-      }
-    });
+  /**
+   * Get available voices from ElevenLabs
+   */
+  async getAvailableVoices(): Promise<Array<{ id: string; name: string; category: string; description?: string }>> {
+    try {
+      const response = await axios.get(`${this.baseUrl}/voices`, {
+        headers: {
+          'xi-api-key': this.apiKey
+        }
+      });
+
+      return response.data.voices.map((voice: any) => ({
+        id: voice.voice_id,
+        name: voice.name,
+        category: voice.category || 'generated',
+        description: voice.description || `${voice.name} voice`,
+        preview_url: voice.preview_url,
+        labels: voice.labels
+      }));
+    } catch (error: any) {
+      console.error('Failed to get ElevenLabs voices:', error.response?.data || error.message);
+      
+      // Return default voices if API call fails
+      return [
+        { id: 'pNInz6obpgDQGcFmaJgB', name: 'Adam', category: 'premade', description: 'Deep, authoritative male voice' },
+        { id: 'EXAVITQu4vr4xnSDxMaL', name: 'Bella', category: 'premade', description: 'Warm, friendly female voice' },
+        { id: 'ErXwobaYiN019PkySvjV', name: 'Antoni', category: 'premade', description: 'Smooth, professional male voice' },
+        { id: 'MF3mGyEYCl7XYWbV9V6O', name: 'Elli', category: 'premade', description: 'Young, energetic female voice' },
+        { id: 'TxGEqnHWrfWFTfGW9XjX', name: 'Josh', category: 'premade', description: 'Casual, conversational male voice' }
+      ];
+    }
   }
 
   /**
    * Generate speech and upload to S3
    */
   async generateAndUploadSpeech(
-    text: string, 
-    fileName: string, 
+    text: string,
+    fileName: string,
     options: Partial<TTSOptions> = {}
   ): Promise<{ audioUrl: string; duration: number }> {
     try {
@@ -196,24 +219,61 @@ class TTSService {
   }
 
   /**
-   * Get available voices for TTS
+   * Delete a cloned voice
    */
-  getAvailableVoices(): Array<{ id: string; name: string; language: string; gender: string }> {
-    return [
-      // gTTS supported languages (simplified list)
-      { id: 'en', name: 'English', language: 'en', gender: 'neutral' },
-      { id: 'es', name: 'Spanish', language: 'es', gender: 'neutral' },
-      { id: 'fr', name: 'French', language: 'fr', gender: 'neutral' },
-      { id: 'de', name: 'German', language: 'de', gender: 'neutral' },
-      { id: 'it', name: 'Italian', language: 'it', gender: 'neutral' },
-      { id: 'pt', name: 'Portuguese', language: 'pt', gender: 'neutral' },
-      { id: 'ru', name: 'Russian', language: 'ru', gender: 'neutral' },
-      { id: 'ja', name: 'Japanese', language: 'ja', gender: 'neutral' },
-      { id: 'ko', name: 'Korean', language: 'ko', gender: 'neutral' },
-      { id: 'zh', name: 'Chinese', language: 'zh', gender: 'neutral' },
-      { id: 'hi', name: 'Hindi', language: 'hi', gender: 'neutral' },
-      { id: 'ar', name: 'Arabic', language: 'ar', gender: 'neutral' },
-    ];
+  async deleteVoice(voiceId: string): Promise<boolean> {
+    try {
+      await axios.delete(`${this.baseUrl}/voices/${voiceId}`, {
+        headers: {
+          'xi-api-key': this.apiKey
+        }
+      });
+
+      console.log(`Voice ${voiceId} deleted successfully`);
+      return true;
+    } catch (error: any) {
+      console.error('Failed to delete voice:', error.response?.data || error.message);
+      return false;
+    }
+  }
+
+  /**
+   * Get voice details
+   */
+  async getVoiceDetails(voiceId: string): Promise<any> {
+    try {
+      const response = await axios.get(`${this.baseUrl}/voices/${voiceId}`, {
+        headers: {
+          'xi-api-key': this.apiKey
+        }
+      });
+
+      return response.data;
+    } catch (error: any) {
+      console.error('Failed to get voice details:', error.response?.data || error.message);
+      throw new Error(`Failed to get voice details: ${error.message}`);
+    }
+  }
+
+  /**
+   * Test TTS functionality
+   */
+  async testTTS(): Promise<boolean> {
+    try {
+      const testText = "Hello, this is a test of the ElevenLabs text-to-speech system.";
+      const result = await this.generateSpeech({ text: testText });
+      
+      console.log('ElevenLabs TTS Test successful:', {
+        audioSize: result.audioBuffer.length,
+        duration: result.duration,
+        format: result.format
+      });
+      
+      return true;
+    } catch (error) {
+      console.error('ElevenLabs TTS Test failed:', error);
+      return false;
+    }
   }
 
   /**
@@ -225,7 +285,7 @@ class TTSService {
       const audioFiles = files.filter(file => 
         file.endsWith('.mp3') || 
         file.endsWith('.wav') || 
-        file.startsWith('tts_')
+        file.startsWith('voice_clone_')
       );
       
       const deletePromises = audioFiles.map(file => {
@@ -237,27 +297,6 @@ class TTSService {
       console.log(`Cleaned up ${audioFiles.length} temporary audio files`);
     } catch (error) {
       console.error('TTS Cleanup Error:', error);
-    }
-  }
-
-  /**
-   * Test TTS functionality
-   */
-  async testTTS(): Promise<boolean> {
-    try {
-      const testText = "Hello, this is a test of the text-to-speech system.";
-      const result = await this.generateSpeech({ text: testText, language: 'en' });
-      
-      console.log('TTS Test successful:', {
-        audioSize: result.audioBuffer.length,
-        duration: result.duration,
-        format: result.format
-      });
-      
-      return true;
-    } catch (error) {
-      console.error('TTS Test failed:', error);
-      return false;
     }
   }
 }
