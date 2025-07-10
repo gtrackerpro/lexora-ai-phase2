@@ -5,8 +5,22 @@ dist/
 .env.local
 .env.*.local
 
-# Wav2Lip models
+# Wav2Lip models and checkpoints
 server/Wav2Lip/models/
+server/wav2Lip/SadTalker/checkpoints/
+server/wav2Lip/SadTalker/gfpgan/
+
+# Generated files (but allow static directories)
+server/wav2Lip/static/generated/*.mp4
+server/wav2Lip/static/generated/*.mp3
+server/wav2Lip/static/generated/*.jpg
+server/wav2Lip/static/generated/*.png
+server/wav2Lip/static/generated/sadtalker_results/
+
+# Keep static directories but ignore large generated files
+!server/wav2Lip/static/
+!server/wav2Lip/static/generated/
+!server/wav2Lip/app/
 
 # Python cache files
 __pycache__/

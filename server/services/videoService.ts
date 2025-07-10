@@ -114,8 +114,8 @@ class VideoService {
       // Update video record with results
       await Video.findByIdAndUpdate(videoId, {
         videoUrl: result.video_url,
-        audioUrl: result.audio_url,
-        durationSec: result.duration,
+        audioUrl: result.audio_url || result.video_url, // Use video URL as fallback for audio
+        durationSec: result.duration || 60, // Default duration if not provided
         status: 'completed'
       });
 
@@ -131,7 +131,7 @@ class VideoService {
   }
 
   /**
-   * Call the Wav2Lip microservice for video generation
+   * Call the Wav2Lip microservice for video generation (local implementation)
    */
   private async callWav2LipService(params: {
     script: string;
@@ -141,11 +141,17 @@ class VideoService {
     lesson_title?: string;
   }): Promise<Wav2LipResponse> {
     try {
-      console.log('Calling Wav2Lip service:', this.wav2lipServiceUrl);
+      console.log('Calling Video Generation service:', this.wav2lipServiceUrl);
+      
+      const requestPayload = {
+        ...params
+      };
+      
+      console.log('Request payload:', requestPayload);
       
       const response = await axios.post<Wav2LipResponse>(
         `${this.wav2lipServiceUrl}/generate-video`,
-        params,
+        requestPayload,
         {
           timeout: 300000, // 5 minutes timeout
           headers: {
@@ -155,19 +161,19 @@ class VideoService {
       );
 
       if (!response.data.success) {
-        throw new Error(response.data.error || 'Wav2Lip service returned error');
+        throw new Error(response.data.error || 'Video generation service returned error');
       }
 
       return response.data;
     } catch (error: any) {
       if (error.code === 'ECONNREFUSED') {
-        throw new Error('Wav2Lip service is not available. Please ensure the service is running.');
+        throw new Error('Video generation service is not available. Please ensure the service is running.');
       } else if (error.code === 'ETIMEDOUT') {
         throw new Error('Video generation timed out. Please try again.');
       } else if (error.response) {
-        throw new Error(`Wav2Lip service error: ${error.response.data?.error || error.response.statusText}`);
+        throw new Error(`Video generation service error: ${error.response.data?.error || error.response.statusText}`);
       } else {
-        throw new Error(`Failed to call Wav2Lip service: ${error.message}`);
+        throw new Error(`Failed to call video generation service: ${error.message}`);
       }
     }
   }
@@ -198,15 +204,16 @@ class VideoService {
     }
 
     try {
-      // Get voice asset and extract preferences
+      // Get voice asset and extract URL for voice cloning
       const voiceAsset = await Asset.findById(voiceId);
-      if (voiceAsset) {
-        // Parse voice preferences from asset metadata or filename
-        // This is a simplified implementation
+      if (voiceAsset && voiceAsset.fileUrl) {
+        console.log(`Found voice sample: ${voiceAsset.fileName} at ${voiceAsset.fileUrl}`);
+        // Return voice options with sample URL for cloning
         return {
           language: 'en-US',
           speed: 1.0,
-          pitch: 0
+          pitch: 0,
+          voice_sample_url: voiceAsset.fileUrl  // This will be used for voice cloning
         };
       }
     } catch (error) {

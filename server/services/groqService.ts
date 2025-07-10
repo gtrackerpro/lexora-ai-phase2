@@ -52,6 +52,46 @@ class GroqService {
     }
   }
 
+  private async retryWithBackoff<T>(fn: () => Promise<T>, maxRetries: number = 3): Promise<T> {
+    let lastError: any;
+    
+    for (let i = 0; i <= maxRetries; i++) {
+      try {
+        return await fn();
+      } catch (error: any) {
+        lastError = error;
+        
+        // Check if it's a rate limit error (429 status)
+        if (error.response?.status === 429 && i < maxRetries) {
+          const retryAfterHeader = error.response?.headers?.['retry-after'];
+          const retryAfterMs = retryAfterHeader ? parseInt(retryAfterHeader) * 1000 : null;
+          
+          // Extract wait time from error message if available
+          const errorMessage = error.response?.data?.error?.message || '';
+          const waitTimeMatch = errorMessage.match(/Please try again in ([0-9.]+)s/);
+          const waitTimeFromMessage = waitTimeMatch ? parseFloat(waitTimeMatch[1]) * 1000 : null;
+          
+          // Use the longer of the two wait times, with a minimum of 2 seconds
+          const waitTime = Math.max(
+            2000, // Minimum 2 seconds
+            retryAfterMs || 0,
+            waitTimeFromMessage || 0,
+            Math.pow(2, i) * 1000 // Exponential backoff: 2^i seconds
+          );
+          
+          console.log(`Rate limit hit, retrying in ${waitTime}ms (attempt ${i + 1}/${maxRetries + 1})`);
+          await new Promise(resolve => setTimeout(resolve, waitTime));
+          continue;
+        }
+        
+        // For other errors or max retries reached, throw the error
+        throw error;
+      }
+    }
+    
+    throw lastError;
+  }
+
   async generateDetailedCurriculum(params: CurriculumParams): Promise<any[]> {
     try {
       const prompt = `Create a detailed ${params.weeks}-week curriculum for "${params.topic}" at ${params.difficulty} level.
