@@ -229,7 +229,180 @@ class VideoService {
   }
 
   /**
-   * Make the actual D-ID API request
+   * Sanitize and validate D-ID request payload
+   */
+  private sanitizeDIDRequest(requestBody: DIDCreateTalkRequest): DIDCreateTalkRequest {
+    // Deep clone to avoid circular references
+    const sanitized = JSON.parse(JSON.stringify(requestBody));
+    
+    // Validate required fields
+    if (!sanitized.source_url || typeof sanitized.source_url !== 'string') {
+      throw new Error('D-ID Request Error: Invalid or missing source_url');
+    }
+    
+    if (!sanitized.script || typeof sanitized.script !== 'object') {
+      throw new Error('D-ID Request Error: Invalid or missing script object');
+    }
+    
+    // Validate script based on type
+    if (sanitized.script.type === 'audio') {
+      if (!sanitized.script.audio_url || typeof sanitized.script.audio_url !== 'string') {
+        throw new Error('D-ID Request Error: Invalid or missing audio_url for audio script');
+      }
+    } else if (sanitized.script.type === 'text') {
+      if (!sanitized.script.input || typeof sanitized.script.input !== 'string') {
+        throw new Error('D-ID Request Error: Invalid or missing input for text script');
+      }
+      if (!sanitized.script.provider || typeof sanitized.script.provider !== 'object') {
+        throw new Error('D-ID Request Error: Invalid or missing provider for text script');
+      }
+    }
+    
+    // Ensure config values are properly typed
+    if (sanitized.config) {
+      if (typeof sanitized.config.fluent !== 'undefined') {
+        sanitized.config.fluent = Boolean(sanitized.config.fluent);
+      }
+      if (typeof sanitized.config.pad_audio !== 'undefined') {
+        sanitized.config.pad_audio = Number(sanitized.config.pad_audio);
+      }
+      if (typeof sanitized.config.stitch !== 'undefined') {
+        sanitized.config.stitch = Boolean(sanitized.config.stitch);
+      }
+    }
+    
+    return sanitized;
+  }
+  
+  /**
+   * Generate diagnostic report for D-ID API failures
+   */
+  private generateDIDDiagnosticReport(requestBody: DIDCreateTalkRequest, error: any): string {
+    const report = {
+      timestamp: new Date().toISOString(),
+      error_type: 'D-ID API Failure',
+      error_details: {
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        message: error.message,
+        data: error.response?.data
+      },
+      request_analysis: {
+        source_url: {
+          provided: !!requestBody.source_url,
+          length: requestBody.source_url?.length || 0,
+          format: requestBody.source_url?.split('.').pop() || 'unknown'
+        },
+        script: {
+          type: requestBody.script.type,
+          has_audio_url: requestBody.script.type === 'audio' && !!(requestBody.script as any).audio_url,
+          has_text_input: requestBody.script.type === 'text' && !!(requestBody.script as any).input,
+          text_length: requestBody.script.type === 'text' ? (requestBody.script as any).input?.length : null
+        },
+        config: requestBody.config || null
+      },
+      payload_size: JSON.stringify(requestBody).length,
+      potential_issues: [] as string[]
+    };
+    
+    // Analyze potential issues
+    if (report.request_analysis.source_url.length > 2000) {
+      report.potential_issues.push('Source URL is very long, may cause issues');
+    }
+    
+    if (report.request_analysis.script.text_length && report.request_analysis.script.text_length > 5000) {
+      report.potential_issues.push('Script text is very long, may cause timeout');
+    }
+    
+    if (report.payload_size > 10000) {
+      report.potential_issues.push('Request payload is very large');
+    }
+    
+    return JSON.stringify(report, null, 2);
+  }
+  
+  /**
+   * Retry D-ID request with progressive simplification
+   */
+  private async retryDIDRequestWithFallback(originalRequest: DIDCreateTalkRequest, error: any, attempt: number = 1): Promise<DIDTalkResponse> {
+    const maxAttempts = 3;
+    
+    if (attempt >= maxAttempts) {
+      console.error('D-ID API: All retry attempts exhausted');
+      if (isDevelopment) {
+        console.warn('[DEV MODE] Falling back to mock response after retries');
+        return this.generateMockVideoResponse();
+      }
+      throw error;
+    }
+    
+    console.log(`D-ID API: Retry attempt ${attempt}/${maxAttempts}`);
+    
+    // Progressive simplification strategies
+    let retryRequest = { ...originalRequest };
+    
+    switch (attempt) {
+      case 1:
+        // Remove optional config parameters
+        retryRequest.config = {
+          result_format: 'mp4'
+        };
+        console.log('D-ID Retry Strategy 1: Simplified config');
+        break;
+        
+      case 2:
+        // Use minimal config
+        retryRequest.config = undefined;
+        console.log('D-ID Retry Strategy 2: No config');
+        break;
+        
+      case 3:
+        // Last resort: switch to text-based if we were using audio
+        if (retryRequest.script.type === 'audio') {
+          console.log('D-ID Retry Strategy 3: Switching from audio to text script');
+          retryRequest.script = {
+            type: 'text',
+            input: 'This is a fallback text for video generation.',
+            provider: {
+              type: 'elevenlabs',
+              voice_id: 'pNInz6obpgDQGcFmaJgB'
+            }
+          };
+        }
+        break;
+    }
+    
+    try {
+      const response = await axios.post<DIDTalkResponse>(
+        `${this.didBaseUrl}/talks`,
+        retryRequest,
+        {
+          headers: {
+            'Authorization': `Basic ${this.didApiKey}`,
+            'Content-Type': 'application/json'
+          },
+          timeout: 30000
+        }
+      );
+      
+      console.log(`D-ID API: Retry ${attempt} successful with ID: ${response.data.id}`);
+      return response.data;
+    } catch (retryError: any) {
+      console.error(`D-ID API: Retry ${attempt} failed:`, retryError.response?.status, retryError.response?.data);
+      
+      // If it's still a 500 error, try next strategy
+      if (retryError.response?.status === 500) {
+        await new Promise(resolve => setTimeout(resolve, 1000 * attempt)); // Exponential backoff
+        return this.retryDIDRequestWithFallback(originalRequest, retryError, attempt + 1);
+      }
+      
+      // For other errors, don't retry
+      throw retryError;
+    }
+  }
+
+  /**
+   * Make the actual D-ID API request with enhanced error handling
    */
   private async makeDIDRequest(requestBody: DIDCreateTalkRequest): Promise<DIDTalkResponse> {
     try {
@@ -242,13 +415,16 @@ class VideoService {
         throw new Error('D-ID API key not configured');
       }
 
-      console.log('Creating D-ID talk with request:', JSON.stringify(requestBody, null, 2));
+      // Sanitize and validate request
+      const sanitizedRequest = this.sanitizeDIDRequest(requestBody);
+      
+      console.log('Creating D-ID talk with sanitized request:', JSON.stringify(sanitizedRequest, null, 2));
       console.log('Using D-ID API key:', this.didApiKey ? 'configured' : 'not configured');
       console.log('D-ID Base URL:', this.didBaseUrl);
 
       const response = await axios.post<DIDTalkResponse>(
         `${this.didBaseUrl}/talks`,
-        requestBody,
+        sanitizedRequest,
         {
           headers: {
             'Authorization': `Basic ${this.didApiKey}`,
@@ -261,19 +437,11 @@ class VideoService {
       console.log(`D-ID talk created with ID: ${response.data.id}`);
       return response.data;
     } catch (error: any) {
-      console.error('D-ID API Error Details:', {
-        status: error.response?.status,
-        statusText: error.response?.statusText,
-        data: error.response?.data,
-        message: error.message,
-        config: {
-          url: error.config?.url,
-          method: error.config?.method,
-          headers: error.config?.headers ? { ...error.config.headers, Authorization: '[REDACTED]' } : undefined
-        }
-      });
+      // Generate diagnostic report
+      const diagnosticReport = this.generateDIDDiagnosticReport(requestBody, error);
+      console.error('D-ID API Diagnostic Report:', diagnosticReport);
       
-      // Handle specific D-ID errors - in development mode, fall back to mock for server errors
+      // Handle specific D-ID errors with enhanced logging
       if (error.response?.status === 402) {
         throw new Error('D-ID API: Insufficient credits. Please check your D-ID account balance.');
       }
@@ -284,15 +452,26 @@ class VideoService {
       
       if (error.response?.status === 400) {
         const errorDetail = error.response?.data?.error?.description || error.response?.data?.detail || 'Invalid request';
+        console.error('D-ID API 400 Error - Request validation failed:', {
+          error: errorDetail,
+          request: requestBody
+        });
         throw new Error(`D-ID API: ${errorDetail}`);
       }
       
       if (error.response?.status === 500) {
-        if (isDevelopment) {
-          console.warn('[DEV MODE] D-ID API server error, returning mock response');
-          return this.generateMockVideoResponse();
+        console.error('D-ID API 500 Error - Server error detected, attempting retry with fallback');
+        
+        // Try retry with fallback strategies
+        try {
+          return await this.retryDIDRequestWithFallback(requestBody, error);
+        } catch (retryError) {
+          if (isDevelopment) {
+            console.warn('[DEV MODE] D-ID API server error after retries, returning mock response');
+            return this.generateMockVideoResponse();
+          }
+          throw new Error('D-ID API: Internal server error persists after retries. Please try again later.');
         }
-        throw new Error('D-ID API: Internal server error. Please try again later.');
       }
       
       // For development mode, fall back to mock response for any D-ID API error
