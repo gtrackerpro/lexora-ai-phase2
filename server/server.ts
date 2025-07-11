@@ -10,6 +10,7 @@ import rateLimit from 'express-rate-limit';
 import connectDB from './config/database';
 import errorHandler from './middleware/errorHandler';
 import './config/passport'; // Initialize passport configuration AFTER env vars are loaded
+import { checkRequiredServices } from './utils/devConfig';
 
 // Route imports
 import authRoutes from './routes/auth';
@@ -22,6 +23,9 @@ import assetRoutes from './routes/assets';
 import userRoutes from './routes/users';
 import searchRoutes from './routes/search';
 import notificationRoutes from './routes/notifications';
+
+// Check required services configuration
+const configStatus = checkRequiredServices();
 
 // Connect to database
 connectDB();
@@ -77,6 +81,19 @@ app.get('/api/health', (req, res) => {
     success: true,
     message: 'Lexora API is running',
     timestamp: new Date().toISOString()
+  });
+});
+
+// Configuration status endpoint
+app.get('/api/config/status', (req, res) => {
+  res.status(200).json({
+    success: true,
+    config: {
+      allConfigured: configStatus.allConfigured,
+      isDevelopment: configStatus.isDevelopment,
+      missingServices: configStatus.missingServices,
+      environment: process.env.NODE_ENV || 'development'
+    }
   });
 });
 

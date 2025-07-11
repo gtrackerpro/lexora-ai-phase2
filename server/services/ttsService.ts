@@ -4,6 +4,7 @@ import path from 'path';
 import { promisify } from 'util';
 import FormData from 'form-data';
 import awsService from './awsService';
+import { hasApiKey, isDevelopment } from '../utils/devConfig';
 
 const writeFile = promisify(fs.writeFile);
 const unlink = promisify(fs.unlink);
@@ -68,10 +69,22 @@ class TTSService {
         useSpeakerBoost = true
       } = options;
 
-      console.log(`Generating speech with ElevenLabs for voice: ${voiceId}`);
+      // Check if API key is available
+      if (!hasApiKey('ELEVENLABS_API_KEY')) {
+        if (isDevelopment) {
+          console.warn('[DEV MODE] ElevenLabs API key not configured, generating mock audio');
+          return this.generateMockAudio(text);
+        }
+        throw new Error('ElevenLabs API key not configured');
+      }
+
+      // Resolve voice ID - if it's a MongoDB ObjectId, map it to a real ElevenLabs voice ID
+      const resolvedVoiceId = await this.resolveVoiceId(voiceId);
+
+      console.log(`Generating speech with ElevenLabs for voice: ${resolvedVoiceId}`);
 
       const response = await axios.post(
-        `${this.baseUrl}/text-to-speech/${voiceId}`,
+        `${this.baseUrl}/text-to-speech/${resolvedVoiceId}`,
         {
           text,
           model_id: 'eleven_multilingual_v2',
@@ -107,6 +120,13 @@ class TTSService {
       };
     } catch (error: any) {
       console.error('ElevenLabs TTS Error:', error.response?.data || error.message);
+      
+      // In development mode, return mock audio instead of failing
+      if (isDevelopment) {
+        console.warn('[DEV MODE] ElevenLabs API failed, generating mock audio');
+        return this.generateMockAudio(options.text);
+      }
+      
       throw new Error(`Failed to generate speech: ${error.response?.data?.detail?.message || error.message}`);
     }
   }
@@ -275,6 +295,74 @@ class TTSService {
       console.error('ElevenLabs TTS Test failed:', error);
       return false;
     }
+  }
+
+  /**
+   * Resolve voice ID - handle mapping from MongoDB ObjectId to ElevenLabs voice ID
+   */
+  private async resolveVoiceId(voiceId: string): Promise<string> {
+    // If it's already a valid ElevenLabs voice ID format, return it
+    if (this.isValidElevenLabsVoiceId(voiceId)) {
+      return voiceId;
+    }
+
+    // If it's a MongoDB ObjectId, try to resolve it from the database
+    if (this.isMongoObjectId(voiceId)) {
+      try {
+        const { default: Asset } = await import('../models/Asset');
+        const asset = await Asset.findById(voiceId);
+        
+        if (asset && asset.elevenLabsVoiceId) {
+          console.log(`Resolved MongoDB voice ID ${voiceId} to ElevenLabs voice ID ${asset.elevenLabsVoiceId}`);
+          return asset.elevenLabsVoiceId;
+        }
+      } catch (error) {
+        console.warn(`Failed to resolve voice ID ${voiceId} from database:`, error);
+      }
+    }
+
+    // Fallback to default voice
+    console.warn(`Using default voice for unresolved voice ID: ${voiceId}`);
+    return 'pNInz6obpgDQGcFmaJgB'; // Default Adam voice
+  }
+
+  /**
+   * Check if a string is a valid ElevenLabs voice ID format
+   */
+  private isValidElevenLabsVoiceId(voiceId: string): boolean {
+    // ElevenLabs voice IDs are typically 20-character alphanumeric strings
+    return /^[a-zA-Z0-9]{20}$/.test(voiceId);
+  }
+
+  /**
+   * Check if a string is a MongoDB ObjectId format
+   */
+  private isMongoObjectId(id: string): boolean {
+    return /^[0-9a-fA-F]{24}$/.test(id);
+  }
+
+  /**
+   * Generate mock audio for development mode
+   */
+  private generateMockAudio(text: string): TTSResult {
+    // Create a minimal MP3 buffer (silent audio)
+    const mockMp3Buffer = Buffer.from([
+      0x49, 0x44, 0x33, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // ID3 header
+      0xFF, 0xFB, 0x90, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // MP3 frame header
+      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+    ]);
+    
+    // Estimate duration based on text length
+    const wordCount = text.split(' ').length;
+    const estimatedDuration = Math.ceil((wordCount / 150) * 60);
+    
+    console.log(`[DEV MODE] Generated mock audio for text: "${text.substring(0, 50)}..."`);
+    
+    return {
+      audioBuffer: mockMp3Buffer,
+      duration: estimatedDuration,
+      format: 'mp3'
+    };
   }
 
   /**

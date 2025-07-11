@@ -5,6 +5,7 @@ import ttsService from './ttsService';
 import awsService from './awsService';
 import axios from 'axios';
 import mongoose from 'mongoose';
+import { hasApiKey, isDevelopment } from '../utils/devConfig';
 
 interface GenerateVideoParams {
   lessonId: string;
@@ -232,7 +233,18 @@ class VideoService {
    */
   private async makeDIDRequest(requestBody: DIDCreateTalkRequest): Promise<DIDTalkResponse> {
     try {
+      // Check if API key is available
+      if (!hasApiKey('D_ID_API_KEY')) {
+        if (isDevelopment) {
+          console.warn('[DEV MODE] D-ID API key not configured, returning mock response');
+          return this.generateMockVideoResponse();
+        }
+        throw new Error('D-ID API key not configured');
+      }
+
       console.log('Creating D-ID talk with request:', JSON.stringify(requestBody, null, 2));
+      console.log('Using D-ID API key:', this.didApiKey ? 'configured' : 'not configured');
+      console.log('D-ID Base URL:', this.didBaseUrl);
 
       const response = await axios.post<DIDTalkResponse>(
         `${this.didBaseUrl}/talks`,
@@ -249,7 +261,46 @@ class VideoService {
       console.log(`D-ID talk created with ID: ${response.data.id}`);
       return response.data;
     } catch (error: any) {
-      console.error('D-ID API Error:', error.response?.data || error.message);
+      console.error('D-ID API Error Details:', {
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        data: error.response?.data,
+        message: error.message,
+        config: {
+          url: error.config?.url,
+          method: error.config?.method,
+          headers: error.config?.headers ? { ...error.config.headers, Authorization: '[REDACTED]' } : undefined
+        }
+      });
+      
+      // Handle specific D-ID errors - in development mode, fall back to mock for server errors
+      if (error.response?.status === 402) {
+        throw new Error('D-ID API: Insufficient credits. Please check your D-ID account balance.');
+      }
+      
+      if (error.response?.status === 401) {
+        throw new Error('D-ID API: Authentication failed. Please check your API key.');
+      }
+      
+      if (error.response?.status === 400) {
+        const errorDetail = error.response?.data?.error?.description || error.response?.data?.detail || 'Invalid request';
+        throw new Error(`D-ID API: ${errorDetail}`);
+      }
+      
+      if (error.response?.status === 500) {
+        if (isDevelopment) {
+          console.warn('[DEV MODE] D-ID API server error, returning mock response');
+          return this.generateMockVideoResponse();
+        }
+        throw new Error('D-ID API: Internal server error. Please try again later.');
+      }
+      
+      // For development mode, fall back to mock response for any D-ID API error
+      if (isDevelopment) {
+        console.warn(`[DEV MODE] D-ID API error (${error.response?.status || 'unknown'}), returning mock response`);
+        return this.generateMockVideoResponse();
+      }
+      
       throw new Error(`D-ID API failed: ${error.response?.data?.error?.description || error.message}`);
     }
   }
@@ -263,6 +314,21 @@ class VideoService {
     audioUrl?: string, 
     duration?: number
   ): Promise<void> {
+    // Handle development mode with mock response
+    if (isDevelopment && didTalkId.startsWith('mock_')) {
+      console.log(`[DEV MODE] Simulating video completion for ${videoId}`);
+      setTimeout(async () => {
+        await Video.findByIdAndUpdate(videoId, {
+          videoUrl: 'https://example.com/mock-video.mp4',
+          audioUrl: audioUrl || 'https://example.com/mock-audio.mp3',
+          durationSec: duration || 30,
+          status: 'completed'
+        });
+        console.log(`[DEV MODE] Mock video generation completed for ${videoId}`);
+      }, 3000); // 3 second delay to simulate processing
+      return;
+    }
+
     const maxAttempts = 60; // 5 minutes with 5-second intervals
     let attempts = 0;
 
@@ -423,6 +489,29 @@ class VideoService {
       console.error('Failed to get available voices:', error);
       return [];
     }
+  }
+
+  /**
+   * Generate mock video response for development mode
+   */
+  private generateMockVideoResponse(): DIDTalkResponse {
+    const mockId = `mock_${Date.now()}`;
+    console.log(`[DEV MODE] Generated mock D-ID response with ID: ${mockId}`);
+    
+    return {
+      id: mockId,
+      object: 'talk',
+      created_at: new Date().toISOString(),
+      status: 'done',
+      result_url: 'https://example.com/mock-video.mp4',
+      metadata: {
+        duration: 30,
+        size_kib: 1024,
+        resolution: [512, 512],
+        num_frames: 750,
+        processing_fps: 25
+      }
+    };
   }
 
   /**
